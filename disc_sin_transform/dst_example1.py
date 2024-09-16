@@ -6,22 +6,24 @@ import time
 
 # Parameters
 DST_TYPE = 2  # See https://en.wikipedia.org/wiki/Discrete_sine_transform
-NOISE_STD = 0.25  # Standard Dev of the noise term
-N_TERMS = 3  # Number of terms to keep
+NOISE_STD = 1  # Standard Dev of the noise term
+N_TERMS = 5 # Number of terms to keep
+N_TIMES = 50
 
 
 # Step 1: Define the function on [0, 1]
 def original_function(x):
-	# return np.sin(np.pi * x) + 0.5 * np.sin(4 * np.pi * x) + NOISE_STD * np.random.normal(size=x.size)
-	return x ** 4 - x
+	return np.sin(np.pi * x) + 0.5 * np.sin(4 * np.pi * x) \
+		+ NOISE_STD * np.random.normal(size=x.size) * (x * (x - 1)) ** 2
+# return x ** 4 - x
 
 
 # Step 2: Perform the sine transform and approximate with the first N terms
-def sine_transform_approximation(y, N):
+def dst_approximation(y, N):
 	y_dst = dst(y, type=DST_TYPE)
 	y_dst_cropped = np.copy(y_dst)
 	y_dst_cropped[N:] = 0  # Zero out all but the first N terms
-	y_approx = idst(y_dst, type=DST_TYPE)
+	y_approx = idst(y_dst_cropped, type=DST_TYPE)
 	return y_approx, y_dst
 
 
@@ -44,17 +46,20 @@ def plot_functions(x, original, fitted, difference):
 
 
 if __name__ == "__main__":
+
+	assert max(abs(original_function(np.array([0,1])))) < 1e-10
+
 	# Step 5: Measure the time taken
 	start_time = time.time()
 
 	# Define the x values
-	x = np.linspace(0, 1, 100)
+	x = np.linspace(0, 1, N_TIMES)
 
 	# Compute the original function values
 	original_values = original_function(x)
 
 	# Perform the sine transform approximation
-	fitted_values, dst_coeffs = sine_transform_approximation(original_values, N_TERMS)
+	fitted_values, dst_coeffs = dst_approximation(original_values, N_TERMS)
 
 	# Calculate the difference
 	difference_values = calculate_difference(original_values, fitted_values)
@@ -63,7 +68,8 @@ if __name__ == "__main__":
 	plot_functions(x, original_values, fitted_values, difference_values)
 
 	end_time = time.time()
-	print("DST Coeffs: ", dst_coeffs)
-	plt.plot(dst_coeffs)
+	print("DST Coeffs: ", dst_coeffs[:20])
+	plt.plot(dst_coeffs[:25])
+	plt.title('DST Coefficients')
 	plt.show()
 	print(f"Time taken: {end_time - start_time:.4f} seconds")
