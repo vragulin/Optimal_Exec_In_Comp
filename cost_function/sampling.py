@@ -36,14 +36,14 @@ def plot_samples(samples: np.ndarray, freqs: List[int], k: int):
     plt.xlabel('x')
     plt.ylabel('sin(x)')
     plt.legend()
-    plt.title('Sample Sine Waves')
+    plt.title(f'Sampling Sine Waves\nWave freqs ={str(freqs)}, Sample freq = {k}')
     plt.grid()
     plt.show()
 
 
 if __name__ == "__main__":
     # Example usage
-    freqs = [3]  # List of sine frequencies
+    freqs = [2, 3]  # List of sine frequencies
     k = 3  # Number of points per segment
 
     samples = sample_sine_wave(freqs, k)

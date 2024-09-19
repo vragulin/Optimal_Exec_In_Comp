@@ -9,6 +9,11 @@
       <sourceFolder url="file://$MODULE_DIR$/tests/disc_sin_transform" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/cost_function" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/optimizer" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/representation" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tests/cost_function" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/tests/fourier" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/tests/strategy_class" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/tests/optimizer" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/docs_from_neil" />
       <excludeFolder url="file://$MODULE_DIR$/plan" />
       <excludeFolder url="file://$MODULE_DIR$/venv" />

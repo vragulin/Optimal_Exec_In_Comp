@@ -8,15 +8,23 @@ from scipy.optimize import minimize
 from scipy.integrate import solve_bvp
 import matplotlib.pyplot as plt
 import fourier as fr
+from cost_function_approx import approx_cost_fn_no_integral_formula
 import time
 
 # Global Parameters
-N = 7  # number of Fourier terms
+N = 10  # number of Fourier terms
 kappa = 1  # permanent impact
 lambda_ = 6  # temporary impact
-xi_a = 0  # risk aversion of a
-sigma = 0  # volatility of the stock
+xi_a = 0  # risk aversion of a -- not sure if it works with the approximate cost function
+sigma = 0  # volatility of the stock -- not sure if it works with the approximate cost function
 N_PLOT_POINTS = 100  # number of points for plotting
+
+# Select the cost function
+QUAD, APPROX = range(2)
+COST_FUNCTION = APPROX
+
+# Global variables
+b_coeffs = None  # It will be estimated when needed
 
 
 def b_func(t, kappa, lambda_, gamma=1):
@@ -64,6 +72,15 @@ def compute_exact_cost(a_func, a_dot_func, kappa, lambda_, verbose=False):
 
 
 def cost_function(a_coeffs):
+	if COST_FUNCTION == QUAD:
+		return cost_function_exact(a_coeffs)
+	elif COST_FUNCTION == APPROX:
+		return cost_function_approx(a_coeffs)
+	else:
+		raise NotImplementedError(f"Unknown cost function")
+
+
+def cost_function_exact(a_coeffs):
 	def a_func(t, kappa, lambda_, gamma=1):
 		return fr.reconstruct_from_sin(t, a_coeffs) + gamma * t
 
@@ -71,6 +88,14 @@ def cost_function(a_coeffs):
 		return fr.reconstruct_deriv_from_sin(t, a_coeffs) + gamma
 
 	return compute_exact_cost(a_func, a_dot_func, kappa, lambda_)
+
+
+def cost_function_approx(a_coeffs, gamma=1):
+	global b_coeffs
+	if b_coeffs is None:
+		b_coeffs = fr.sin_coeff(lambda t: b_func(t, kappa, lambda_) - gamma * t, N)
+
+	return approx_cost_fn_no_integral_formula(a_coeffs, b_coeffs, kappa, lambda_)
 
 
 def plot_curves(init_guess, opt_coeffs, exact_solution, gamma=1) -> dict:
@@ -85,10 +110,11 @@ def plot_curves(init_guess, opt_coeffs, exact_solution, gamma=1) -> dict:
 	plt.figure(figsize=(10, 5))
 
 	# plt.plot(t_values, init_curve, label='Initial guess', color='blue')
-	plt.plot(t_values, opt_curve, label='Optimal Approx a(t)', color='red')
-	plt.plot(t_values, exact_solution, label="Optimal Exact a(t)", color="green")
-	plt.plot(t_values, b_curve, label="b(t)", color="grey", linestyle="dashed")
-	plt.title(f'Initial Guess vs. Optimal Solutions (Exact and Approximated)')
+	plt.plot(t_values, opt_curve, label='Optimal approx a(t)', color='red', linewidth=2)
+	plt.plot(t_values, exact_solution, label="Optimal exact a(t)", color="green")
+	plt.plot(t_values, b_curve, label="Passive adversary b(t)", color="blue", linestyle="dashed")
+	plt.suptitle(f'Best Response to a Passive Adversary')
+	plt.title(f'Adversary trading λ={lambda_} units, Permanent Impact κ={kappa}', fontsize=11)
 	plt.legend()
 	plt.grid()
 	plt.show()
@@ -118,7 +144,7 @@ if __name__ == "__main__":
 	# Initial guess for a_coeffs
 	initial_guess = np.zeros(N)
 	initial_cost = cost_function(initial_guess)
-	print(f"Initial a_coeffs = {np.round(initial_guess,3)}")
+	print(f"Initial a_coeffs = {np.round(initial_guess, 3)}")
 	print(f"Initial guess cost = {initial_cost:.4f}\n")
 
 	# Minimize the cost function
@@ -132,7 +158,7 @@ if __name__ == "__main__":
 	# Compute the cost with optimized coefficients
 	optimized_cost = cost_function(optimized_a_coeffs)
 
-	print(f"Optimized a_coeffs = {np.round(optimized_a_coeffs,3)}")
+	print(f"Optimized a_coeffs = {np.round(optimized_a_coeffs, 3)}")
 	print(f"Optimized cost = {optimized_cost:.4f}")
 
 	# Find the exact solution

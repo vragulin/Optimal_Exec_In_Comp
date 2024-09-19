@@ -9,6 +9,8 @@ from scipy.optimize import minimize
 from scipy.integrate import solve_bvp
 import matplotlib.pyplot as plt
 import fourier as fr
+from cost_function_approx import approx_cost_fn_no_integral_formula
+from sampling import sample_sine_wave
 import time
 
 # Global Parameters
@@ -19,11 +21,19 @@ xi_a = 0  # risk aversion of a
 sigma = 0  # volatility of the stock
 
 N_PLOT_POINTS = 100  # number of points for plotting
-N_SAMPLE_POINTS = 50  # number of points to sample constraints
+T_SAMPLE_PER_SEMI_WAVE = 3  # number of points to sample constraints
 
 # Parameters for the b(t) function
-B_CONSERVATIVE = False
+B_CONSERVATIVE = True
 B_EAGER_CONST = 1.2
+
+# Select the cost function
+QUAD, APPROX = range(2)
+COST_FUNCTION = APPROX
+
+# Global variables
+b_coeffs = None  # It will be estimated when needed
+t_sample = None # Points at whcih we sample the inequalities
 
 if B_CONSERVATIVE:
 	def b_func(t, kappa, lambda_, gamma=1):
@@ -134,14 +144,21 @@ def boundary_conditions(ya, yb):
 if __name__ == "__main__":
 	# Minimize the cost function
 
-	def cost_function(a_coeffs):
-		def a_func(t, kappa, lambda_, gamma=1):
-			return fr.reconstruct_from_sin(t, a_coeffs) + gamma * t
+	def cost_function(a_coeffs, gamma=1):
+		if COST_FUNCTION == QUAD:
+			def a_func(t, kappa, lambda_, gamma=1):
+				return fr.reconstruct_from_sin(t, a_coeffs) + gamma * t
 
-		def a_dot_func(t, kappa, lambda_, gamma=1):
-			return fr.reconstruct_deriv_from_sin(t, a_coeffs) + gamma
+			def a_dot_func(t, kappa, lambda_, gamma=1):
+				return fr.reconstruct_deriv_from_sin(t, a_coeffs) + gamma
 
-		return compute_exact_cost(a_func, a_dot_func, kappa, lambda_)
+			return compute_exact_cost(a_func, a_dot_func, kappa, lambda_)
+		else:
+			global b_coeffs
+			if b_coeffs is None:
+				b_coeffs = fr.sin_coeff(lambda t: b_func(t, kappa, lambda_) - gamma * t, N)
+
+			return approx_cost_fn_no_integral_formula(a_coeffs, b_coeffs, kappa, lambda_)
 
 
 	def L_func(t):
@@ -154,14 +171,16 @@ if __name__ == "__main__":
 
 	def constraint_function(a_coeffs):
 		# Sample points
-		t_points = np.linspace(0, 1, N_SAMPLE_POINTS)
+		global t_sample
+		if t_sample is None:
+			t_sample = sample_sine_wave(list(range(1, len(a_coeffs)+1)), T_SAMPLE_PER_SEMI_WAVE)
 
 		def a_func(t, kappa, lambda_, gamma=1):
 			return fr.reconstruct_from_sin(t, a_coeffs) + gamma * t
 
-		a_values = np.array([a_func(t, kappa, lambda_) for t in t_points])
-		L_values = np.array([L_func(t) for t in t_points])
-		U_values = np.array([U_func(t) for t in t_points])
+		a_values = np.array([a_func(t, kappa, lambda_) for t in t_sample])
+		L_values = np.array([L_func(t) for t in t_sample])
+		U_values = np.array([U_func(t) for t in t_sample])
 
 		return np.concatenate([U_values - a_values, a_values - L_values])
 
