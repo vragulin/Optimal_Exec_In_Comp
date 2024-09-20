@@ -144,7 +144,7 @@ class State:
         ax.scatter(t_values, a_theo, s=20, label="a theo", color="red")
         ax.scatter(t_values, b_theo, s=20, label="b theo", color="tomato")
         ax.plot(t_values, a_approx, label="a approx", color="green", linestyle="-")
-        ax.plot(t_values, b_approx, label="b theo", color="blue", linestyle="-")
+        ax.plot(t_values, b_approx, label="b approx", color="blue", linestyle="-")
         ax.set_title(r"Theoretical and Approximated Trading Schedules")
         ax.legend()
         ax.set_xlabel('t')
