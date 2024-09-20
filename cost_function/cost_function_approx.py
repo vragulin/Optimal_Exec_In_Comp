@@ -30,19 +30,19 @@ def int_cos_sin(n, m):
 	return ans
 
 
-def approx_cost_fn_no_integral_formula(a_n, b_n, kappa, lambd, verbose=False):
+def cost_fn_a_approx_old(a_n: np.ndarray, b_n: np.ndarray,
+                     kappa: float, lambd: float, verbose=False):
 	"""
-	This computes the cost function from the formula in the Real-world constraints paper.
+	This computes the cost function of trader A from the formula in the
+	real-world constraints paper.
 	This approach avoids computing integrals.
 
-	Parameters:
-	a_n (array-like): Coefficients a_n for n from 1 to N
-	b_n (array-like): Coefficients b_n for n from 1 to N
-	kappa (float): Constant κ (kappa)
-	lambd (float): Constant λ (lambda)
+	:param a_n: Coefficients a_n for n from 1 to N
+	:param b_n: Coefficients b_n for n from 1 to N
+	:param kappa: Constant κ (kappa) - permanent market impact
+	:param lambd: Constant λ (lambda) - temporary market impact
 
-	Returns:
-	float: The computed value of the expression I
+	:return: The computed value of the expression I
 	"""
 	# Ensure input sequences are numpy arrays
 	a_n = np.array(a_n, dtype=np.float64)
@@ -109,11 +109,28 @@ def approx_cost_fn_no_integral_formula(a_n, b_n, kappa, lambd, verbose=False):
 	return int_I + int_II + int_III + int_IV
 
 
-def approx_cost_fn_from_paper(a_n, b_n, kappa, lambd, verbose=False):
-	""" Formula coded up from the latest version of the paper
+def cost_fn_a_approx(a_n, b_n, kappa, lambd, verbose=False):
 	"""
-	pi = np.pi
+		This computes the cost function of trader A from the formula in the
+		real-world constraints paper.
+		This approach avoids computing integrals.
+
+		:param a_n: Coefficients a_n for n from 1 to N
+		:param b_n: Coefficients b_n for n from 1 to N
+		:param kappa: Constant κ (kappa) - permanent market impact
+		:param lambd: Constant λ (lambda) - temporary market impact
+
+		:return: The computed value of the expression I
+		"""
+	# Ensure input sequences are numpy arrays
+	a_n = np.array(a_n, dtype=np.float64)
+	b_n = np.array(b_n, dtype=np.float64)
 	n_coeffs = len(a_n)
+
+	if len(b_n) != n_coeffs:
+		raise ValueError("Sequences a_n and b_n must be of the same length.")
+
+	pi = np.pi
 	n = np.arange(1, n_coeffs + 1)
 
 	# Calculate individual terms
@@ -126,6 +143,7 @@ def approx_cost_fn_from_paper(a_n, b_n, kappa, lambd, verbose=False):
 	t4 = 2 * kappa * sum((a_n[i - 1] + lambd * b_n[i - 1]) * a_n[j - 1] * i * j / (i * i - j * j)
 	                     for i in n for j in n if (i + j) % 2 == 1)
 
+	total_loss  = t1 + t2 + t3 + t4
 	if verbose:
 		print("APPROX TOTAL COST FUNCTION FROM APPROX FORMULA:")
 		print("int_I: ", t1)
@@ -133,9 +151,56 @@ def approx_cost_fn_from_paper(a_n, b_n, kappa, lambd, verbose=False):
 		print("int_III: ", t3)
 		print("int_IV: ", t4)
 
-		print("Loss function approximation formula: ", t1 + t2 + t3 + t4)
+		print("Loss function approximation formula: ", total_loss)
 
-	return t1 + t2 + t3 + t4
+	return total_loss
+
+
+def cost_fn_b_approx(a_n, b_n, kappa, lambd, verbose=False):
+	"""
+		This computes the cost function of trader B from the formula in the
+		real-world constraints paper.
+		This approach avoids computing integrals.
+
+		:param a_n: Coefficients a_n for n from 1 to N
+		:param b_n: Coefficients b_n for n from 1 to N
+		:param kappa: Constant κ (kappa) - permanent market impact
+		:param lambd: Constant λ (lambda) - temporary market impact
+
+		:return: The computed value of the expression I
+		"""
+	# Ensure input sequences are numpy arrays
+	a_n = np.array(a_n, dtype=np.float64)
+	b_n = np.array(b_n, dtype=np.float64)
+	n_coeffs = len(a_n)
+
+	if len(b_n) != n_coeffs:
+		raise ValueError("Sequences a_n and b_n must be of the same length.")
+
+	pi = np.pi
+	n = np.arange(1, n_coeffs + 1)
+
+	# Calculate individual terms
+	t1 = (2 + kappa) * (1 + lambd) / 2
+
+	t2 = pi ** 2 / 2 * sum(i ** 2 * (a_n[i - 1] * b_n[i - 1] + lambd * b_n[i - 1] ** 2) for i in n)
+
+	t3 = 2 * kappa / pi * sum((a_n[i - 1] - b_n[i - 1]) / i for i in n if i % 2 == 1)
+
+	t4 = 2 * kappa * sum((a_n[i - 1] + lambd * b_n[i - 1]) * b_n[j - 1] * i * j / (i * i - j * j)
+	                     for i in n for j in n if (i + j) % 2 == 1)
+
+	total_loss = lambd * (t1 + t2 + t3 + t4)
+	if verbose:
+		print("APPROX TOTAL COST FUNCTION FROM APPROX FORMULA:")
+		print("int_I: ", t1)
+		print("int_II: ", t2)
+		print("int_III: ", t3)
+		print("int_IV: ", t4)
+
+		print("Loss function approximation formula: ", total_loss)
+
+	return total_loss
 
 
 # Exact cost computation function
@@ -395,7 +460,7 @@ def compute_sine_series_for_functions(a_func, b_func, kappa, lambd, N):
 
 		# Compute coefficients for b_func
 		def integrand_b(t):
-			return 2 * (b_func(t, kappa, kappa) - t) * np.sin(n * pi * t)
+			return 2 * (b_func(t, kappa, lambd) - t) * np.sin(n * pi * t)
 
 		coeff_b, _ = quad(integrand_b, 0, 1)
 		b_coeffs[n - 1] = coeff_b
@@ -448,12 +513,12 @@ if __name__ == "__main__":
 	print("---> The value of the exact integrated actual cost fn is:", I)
 	print()
 
-	I = approx_cost_fn_no_integral_formula(a_coeffs, b_coeffs, kappa, lambd, verbose=True)
+	I = cost_fn_a_approx(a_coeffs, b_coeffs, kappa, lambd, verbose=True)
 
 	print("---> The value of the totally new approximate cost fn is:", I)
 	print()
 
-	I = approx_cost_fn_from_paper(a_coeffs, b_coeffs, kappa, lambd, verbose=True)
+	I = cost_fn_a_approx(a_coeffs, b_coeffs, kappa, lambd, verbose=True)
 
 	print("---> The value of the formula the 9/16 paper is:", I)
 	print()

@@ -2,7 +2,7 @@
 import numpy as np
 import fourier as fr
 import matplotlib.pyplot as plt
-from cost_function_approx import approx_cost_fn_no_integral_formula
+from cost_function_approx import cost_fn_a_approx
 from scipy.optimize import minimize
 
 
@@ -46,7 +46,7 @@ class EncodedStrategy:
             """
 
         def cost_function(t):
-            return approx_cost_fn_no_integral_formula(t, self.sin_coeffs, self.kappa, self.lambd)
+            return cost_fn_a_approx(t, self.sin_coeffs, self.kappa, self.lambd)
 
         init_guess = np.zeros(self.n_terms)
         result = minimize(cost_function, init_guess)
@@ -55,7 +55,7 @@ class EncodedStrategy:
 
     @staticmethod
     def cost(a_strat: "EncodedStrategy", b_strat: "EncodedStrategy") -> float:
-        return approx_cost_fn_no_integral_formula(
+        return cost_fn_a_approx(
             a_strat.sin_coeffs, b_strat.sin_coeffs,
             b_strat.kappa, b_strat.lambd
         )

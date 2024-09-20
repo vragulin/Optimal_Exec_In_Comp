@@ -8,7 +8,7 @@ import numpy as np
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 import fourier as fr
-from cost_function_approx import approx_cost_fn_no_integral_formula
+from cost_function_approx import cost_fn_a_approx
 from sampling import sample_sine_wave
 import trading_funcs as tf
 from typing import Any
@@ -132,7 +132,7 @@ if __name__ == "__main__":
                 if b_coeffs is None:
                     b_coeffs = fr.sin_coeff(lambda t: b_func(t, params) - gamma * t, N)
 
-                return approx_cost_fn_no_integral_formula(a_coeffs, b_coeffs, kappa, lambd)
+                return cost_fn_a_approx(a_coeffs, b_coeffs, kappa, lambd)
 
 
             for u, sigma in enumerate(sigma_list):

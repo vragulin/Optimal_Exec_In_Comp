@@ -8,7 +8,7 @@ from scipy.optimize import minimize
 from scipy.integrate import solve_bvp
 import matplotlib.pyplot as plt
 import fourier as fr
-from cost_function_approx import approx_cost_fn_no_integral_formula
+from cost_function_approx import cost_fn_a_approx
 import time
 
 # Global Parameters
@@ -95,7 +95,7 @@ def cost_function_approx(a_coeffs, gamma=1):
 	if b_coeffs is None:
 		b_coeffs = fr.sin_coeff(lambda t: b_func(t, kappa, lambda_) - gamma * t, N)
 
-	return approx_cost_fn_no_integral_formula(a_coeffs, b_coeffs, kappa, lambda_)
+	return cost_fn_a_approx(a_coeffs, b_coeffs, kappa, lambda_)
 
 
 def plot_curves(init_guess, opt_coeffs, exact_solution, gamma=1) -> dict:
