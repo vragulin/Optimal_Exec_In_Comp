@@ -167,8 +167,12 @@ class State:
         #               b_costs[i + 1] - b_costs[i],
         #               head_width=0.03, head_length=0.04, fc='red', ec='red')
 
+        # Highlight the starting and ending points
+        plt.scatter(a_costs[0], b_costs[0], color='green', s=100, label='init guess')
+        plt.scatter(a_costs[-1], b_costs[-1], color='red', s=100, label='result')
+
         # Label the starting and ending points
-        plt.text(a_costs[0], b_costs[0], 'init guess', fontsize=12, ha='right', color='red')
+        plt.text(a_costs[0], b_costs[0], 'init guess', fontsize=12, ha='right', color='green')
         plt.text(a_costs[-1], b_costs[-1], 'result', fontsize=12, ha='right', color='red')
 
         ax.set_xlabel('Trader A cost')
