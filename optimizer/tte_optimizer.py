@@ -9,13 +9,13 @@ import cost_function_approx as ca
 import trading_funcs as tf
 import fourier as fr
 
-lambd = 20
-kappa = 10
+lambd = 6
+kappa = 1
 gamma = 1
 
 DEFAULT_N = 10
-TOL_COEFFS = 1e-4
-TOL_COSTS = 1e-5
+TOL_COEFFS = 1e-1
+TOL_COSTS = TOL_COEFFS
 N_PLOT_POINTS = 100
 
 # Which trader we are solving for
@@ -155,31 +155,33 @@ class State:
     def plot_convergence(iter_hist: List["State"], ax: Any) -> None:
 
         a_costs = [i.a_cost for i in iter_hist]
-        b_costs = [i.a_cost for i in iter_hist]
+        b_costs = [i.b_cost for i in iter_hist]
 
         # Plot the points as circles
-        ax.scatter(a_costs, b_costs, color='blue', s=50, label='(a,b) costs')
+        ax.scatter(a_costs[1:-1], b_costs[1:-1], color='darkblue', s=20, label='(a,b) costs', alpha=0.4)
 
         # Connect the points with lines
-        ax.plot(a_costs, b_costs, color='blue', linestyle='-', linewidth=1, alpha=0.5)
+        ax.plot(a_costs, b_costs, color='darkblue', linestyle='-', linewidth=1, alpha=0.4)
         # for i in range(len(a_costs) - 1):
         #     plt.arrow(a_costs[i], b_costs[i], a_costs[i + 1] - a_costs[i],
         #               b_costs[i + 1] - b_costs[i],
         #               head_width=0.03, head_length=0.04, fc='red', ec='red')
 
         # Highlight the starting and ending points
-        plt.scatter(a_costs[0], b_costs[0], color='green', s=100, label='init guess')
-        plt.scatter(a_costs[-1], b_costs[-1], color='red', s=100, label='result')
+        plt.scatter(a_costs[0], b_costs[0], color='green', s=70, label='init guess')
+        plt.scatter(a_costs[-1], b_costs[-1], color='red', s=70, label='result')
 
         # Label the starting and ending points
-        plt.text(a_costs[0], b_costs[0], 'init guess', fontsize=12, ha='right', color='green')
-        plt.text(a_costs[-1], b_costs[-1], 'result', fontsize=12, ha='right', color='red')
+        plt.text(a_costs[0], b_costs[0], 'init guess', fontsize=12, ha='right',
+                 color='black', weight='bold')
+        plt.text(a_costs[-1], b_costs[-1], 'result', fontsize=12, ha='right',
+                 color='black', weight='bold')
 
         ax.set_xlabel('Trader A cost')
         ax.set_ylabel('Trader B cost')
         ax.set_title('Trading Cost Convergence to Equilibrium - State Space Diagram')
         plt.legend()
-        ax.grid()
+        # ax.grid()
 
 
 if __name__ == "__main__":
@@ -199,12 +201,13 @@ if __name__ == "__main__":
         state = state_a.update(solve=TRADER_B)
         print("New State :")
         print(str(state))
+        iter_hist.append(state_a)
         iter_hist.append(state)
-        if iter_hist[-1].within_tol(iter_hist[-2]):
+        if iter_hist[-1].within_tol(iter_hist[-3]):
             break
 
     print(f"\n-------------------------------\n"
-          f"Converged after {len(iter_hist) - 1} iterations:")
+          f"Converged after {len(iter_hist) //2 } iterations:")
     print("\nFinal State:")
     print(state)
 
@@ -216,5 +219,3 @@ if __name__ == "__main__":
 
     plt.tight_layout(rect=(0., 0.01, 1., 0.97))
     plt.show()
-
-    print("Done")
