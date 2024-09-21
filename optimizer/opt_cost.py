@@ -9,7 +9,8 @@ from scipy.integrate import solve_bvp
 import matplotlib.pyplot as plt
 import os
 import sys
-sys.path.append(os.path.abspath("../cost_function"))
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.abspath(os.path.join(current_dir, '..', 'cost_function')))
 import fourier as fr
 from cost_function_approx import cost_fn_a_approx
 import time

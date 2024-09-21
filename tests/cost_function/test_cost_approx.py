@@ -5,7 +5,8 @@ import pytest as pt
 import numpy as np
 import os
 import sys
-sys.path.append(os.path.abspath("../../cost_function"))
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.abspath(os.path.join(current_dir, '../../cost_function')))
 import cost_function_approx as ca
 
 

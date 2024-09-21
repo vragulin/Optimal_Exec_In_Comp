@@ -11,14 +11,15 @@ from typing import Any
 import time
 import os
 import sys
-sys.path.append(os.path.abspath("../cost_function"))
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.abspath(os.path.join(current_dir, '..', 'cost_function')))
 import fourier as fr
 from cost_function_approx import cost_fn_a_approx
 from sampling import sample_sine_wave
 import trading_funcs as tf
 
 # Global Parameters
-N = 15  # number of Fourier terms
+N = 10  # number of Fourier terms
 lambd_list = [1, 2, 5, 10]  # temporary impact
 kappa_list = [0.5, 2, 10, 20]  # Time by which we have to be "in the box"
 sigma_list = [None, 1, 5, 10]  # percent that needs to be completed

@@ -2,9 +2,10 @@ import pytest as pt
 import numpy as np
 import os
 import sys
-
-sys.path.append(os.path.abspath("../../cost_function"))
-sys.path.append(os.path.abspath("../../disc_sin_transform"))
+current_dir = os.path.dirname(os.path.abspath(__file__))
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.abspath(os.path.join(current_dir, '../../cost_function')))
+sys.path.append(os.path.abspath(os.path.join(current_dir, '../../disc_sin_transform')))
 import nc_fourier_coeffs as ncf
 import dst_example1 as dst
 

@@ -9,7 +9,8 @@ from typing import Any, List, Dict
 import trading_funcs as tf
 import os
 import sys
-sys.path.append(os.path.abspath("../cost_function"))
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.abspath(os.path.join(current_dir, '..', 'cost_function')))
 import cost_function_approx as ca
 import fourier as fr
 
@@ -18,7 +19,7 @@ import fourier as fr
 LAMBD = 5
 KAPPA = 1
 
-DEFAULT_N = 40
+DEFAULT_N = 10
 TOL_COEFFS = 1e-2
 TOL_COSTS = TOL_COEFFS
 FRACTION_MOVE = 0.2

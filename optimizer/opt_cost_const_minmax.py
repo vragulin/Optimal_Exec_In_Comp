@@ -11,13 +11,14 @@ import matplotlib.pyplot as plt
 import time
 import os
 import sys
-sys.path.append(os.path.abspath("../cost_function"))
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.abspath(os.path.join(current_dir, '..', 'cost_function')))
 import fourier as fr
 from cost_function_approx import cost_fn_a_approx
 from sampling import sample_sine_wave
 
 # Global Parameters
-N = 20  # number of Fourier terms
+N = 10  # number of Fourier terms
 kappa = 1  # permanent impact
 lambda_ = 6  # temporary impact
 xi_a = 0  # risk aversion of a
