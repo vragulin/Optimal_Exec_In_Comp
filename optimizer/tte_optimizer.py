@@ -9,23 +9,25 @@ from typing import Any, List, Dict
 import trading_funcs as tf
 import os
 import sys
+
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.abspath(os.path.join(current_dir, '..', 'cost_function')))
 import cost_function_approx as ca
 import fourier as fr
 
-
 # Parameters and Constants
-LAMBD = 5
-KAPPA = 1
+LAMBD = 20
+KAPPA = 6
 
-DEFAULT_N = 10
-TOL_COEFFS = 1e-2
+DEFAULT_N = 15
+TOL_COEFFS = 1e-3
 TOL_COSTS = TOL_COEFFS
 FRACTION_MOVE = 0.2
 MAX_ITER = 250
 MAX_ABS_COST = 1e10
 N_PLOT_POINTS = 100
+N_ITER_LINES = 4
+LINE_STYLES = ['-', '--', '-.', ':', (0, (3, 1, 1, 1))]
 GAMMA = 1  # Put it at the end since it never changes
 
 # Which trader we are solving for
@@ -201,30 +203,108 @@ class State:
                      f'State Space Diagram: (x,y) = (cost A, cost B)')
         ax.legend()
 
-    def plot_func_convergence(self, iter_hist: List["State"], res_coeffs: Dict[str, Any],
-                               ax: Any) -> None:
+    @staticmethod
+    def plot_func_convergence(iter_hist: List["State"], res_coeffs: Dict[str, Any],
+                              ax: Any) -> None:
         """ Plot the difference between theoretical schedule and the approximations
         """
+        t_values = np.linspace(0, 1, N_PLOT_POINTS)
+        a_theo, b_theo = res_coeffs['a_theo'], res_coeffs['b_theo']
 
-        iter_step = 5
+        iter_idx = State._generate_idx_of_iters_to_plot(len(iter_hist), N_ITER_LINES)
 
+        for i_line, iter_idx in enumerate(iter_idx):
+            a_diffs = State._diff_vs_theo(iter_hist, iter_idx, t_values, a_theo, is_a=True)
+            b_diffs = State._diff_vs_theo(iter_hist, iter_idx, t_values, b_theo, is_a=False)
 
-    def plot_state_space_v_theo(self, iter_hist: List["State"], res_coeffs: Dict[str, Any],
+            linestyle = LINE_STYLES[i_line % len(LINE_STYLES)]
+            iter_code = (iter_idx + 1) // 2
+            ax.plot(t_values, a_diffs, label=r"$\Delta a(t)$, " + f"iter={iter_code}",
+                    color="red", linestyle=linestyle)
+            ax.plot(t_values, b_diffs, label=r"$\Delta b(t)$, " + f"iter={iter_code}",
+                    color="blue", linestyle=linestyle)
+            ax.set_title("Convergence to Theoretical Value\n" +
+                         f"Diffs between approx. and theo. a(t),b(t) curves")
+            ax.set_xlabel('t')
+            ax.set_ylabel('a(t), b(t) residuals vs. theoretical')
+            ax.legend()
+            ax.grid()
+
+    @staticmethod
+    def _diff_vs_theo(iter_hist: List["State"], i: int, t_values: np.ndarray,
+                      theo_vals: List[float], is_a: bool) -> List[float]:
+        i_state = iter_hist[i]
+        coeff_approx = i_state.a_coeff if is_a else i_state.b_coeff
+        val_approx = [fr.reconstruct_from_sin(t, coeff_approx) + GAMMA * t for t in t_values]
+        return [appx-theo for appx, theo in zip(val_approx, theo_vals)]
+
+    @staticmethod
+    def _find_theo_fourier_coeffs(n_coeffs):
+        # Find theo Fourier Coeffs
+        def a_func(t, kappa, lambd):
+            params = {'kappa': kappa, 'lambd': lambd, 'trader_a': True}
+            return tf.equil_2trader(t, params)
+
+        def b_func(t, kappa, lambd):
+            params = {'kappa': kappa, 'lambd': lambd, 'trader_a': False}
+            return tf.equil_2trader(t, params)
+
+        a_coeff_theo, b_coeff_theo = fr.find_fourier_coefficients((a_func, b_func), KAPPA, LAMBD, n_coeffs, GAMMA)
+        return a_coeff_theo, b_coeff_theo
+
+    @staticmethod
+    def plot_state_space_v_theo(iter_hist: List["State"], res_coeffs: Dict[str, Any],
                                 ax: Any) -> None:
         """ Plot eveolution of costs for A and B vs. Teoretical over iterations
         """
-        ...
+        # Calculate theoretical equilibrium estimates
+        a_coeff_theo, b_coeff_theo = State._find_theo_fourier_coeffs(len(iter_hist[0].a_coeff))
+        a_cost_theo = ca.cost_fn_a_approx(a_coeff_theo, b_coeff_theo, KAPPA, LAMBD)
+        b_cost_theo = ca.cost_fn_b_approx(a_coeff_theo, b_coeff_theo, KAPPA, LAMBD)
+
+        # We are interested in abs differences between approximated and theo costs
+        a_res = [abs(i.a_cost - a_cost_theo) for i in iter_hist]
+        b_res = [abs(i.b_cost - b_cost_theo) for i in iter_hist]
+        # Plot the points as circles
+        t_values = np.linspace(0, 1, N_PLOT_POINTS)
+        ax.scatter(a_res[1:-1], b_res[1:-1], color='darkblue', s=20, label=r'$|\Delta A|, |\Delta B|$', alpha=0.4)
+
+        # Connect the points with lines
+        ax.plot(a_res, b_res, color='darkblue', linestyle='-', linewidth=1, alpha=0.4)
+
+        # Highlight the starting and ending points
+        ax.scatter(a_res[0], b_res[0], color='green', s=70, label='init guess')
+        ax.scatter(a_res[-1], b_res[-1], color='red', s=70, label='solution')
+
+        # Label the starting and ending points
+        ax.text(a_res[0], b_res[0], 'init guess', fontsize=12, ha='right',
+                color='black', weight='bold')
+        ax.text(a_res[-1], b_res[-1], 'solution', fontsize=12, ha='right',
+                color='black', weight='bold')
+
+        ax.set_xlabel(r'$|A_{appox}-A_{theo}|$')
+        ax.set_ylabel(r'$|B_{appox}-B_{theo}|$')
+        ax.set_title('Absolute Diff. between Approx. and Theo. Costs\n'
+                     r'$|A_{appox}-A_{theo}|$ vs. $|B_{approx} - B_{theo}|$')
+        ax.legend()
+
+    @staticmethod
+    def _generate_idx_of_iters_to_plot(n_iter: int, n_lines: int) -> List[int]:
+        idx_step = max(n_iter / (N_ITER_LINES - 1), 1);
+        iter_idx = [round(i * idx_step) for i in range(n_lines) if i * idx_step < n_iter - 1]
+        iter_idx.append(n_iter - 1)
+        return iter_idx
 
     def plot_results(self, iter_hist: List["State"]):
         fig, axs = plt.subplots(2, 2, figsize=(10, 10))
-        plt.suptitle("Two-Trader Equilibrium Strategies\n" +
-                     r"$\kappa$" + f"={KAPPA}, " + r"$\lambda$" + f"={LAMBD}, " +
-                     f"{len(self.a_coeff)} Fourier terms, "+
-                     f"{len(iter_hist) // 2} iterations", fontsize=16)
+        plt.suptitle("Two-Trader Equilibrium Strategies, " +
+                     r"$\kappa$" + f"={KAPPA}, " + r"$\lambda$" + f"={LAMBD}\n" +
+                     f"{len(self.a_coeff)} Fourier terms, " +
+                     f"{len(iter_hist) // 2} solver iterations", fontsize=16)
         res_coeffs = self.check_v_theo(LAMBD, KAPPA, axs[0, 0])
         self.plot_state_space(iter_hist, axs[1, 0])
-        # self.plot_func_convergence(iter_hist, res_coeffs, axs[0, 1])
-        # self.plot_state_space_v_theo(iter_hist, res_coeffs, axs[1, 1])
+        self.plot_func_convergence(iter_hist, res_coeffs, axs[0, 1])
+        self.plot_state_space_v_theo(iter_hist, res_coeffs, axs[1, 1])
         plt.tight_layout(rect=(0., 0.01, 1., 0.97))
         plt.show()
 
