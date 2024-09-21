@@ -3,6 +3,9 @@ Tests to ensure that the analytic approximation is correct
 """
 import pytest as pt
 import numpy as np
+import os
+import sys
+sys.path.append(os.path.abspath("../../cost_function"))
 import cost_function_approx as ca
 
 

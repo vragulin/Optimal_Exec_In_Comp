@@ -1,3 +1,7 @@
+import os
+import sys
+sys.path.append(os.path.abspath("../../representation"))
+sys.path.append(os.path.abspath("../../cost_function"))
 from strategy_class import EncodedStrategy
 
 

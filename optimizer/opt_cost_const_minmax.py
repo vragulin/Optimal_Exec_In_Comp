@@ -8,10 +8,13 @@ from scipy.integrate import quad
 from scipy.optimize import minimize
 from scipy.integrate import solve_bvp
 import matplotlib.pyplot as plt
+import time
+import os
+import sys
+sys.path.append(os.path.abspath("../cost_function"))
 import fourier as fr
 from cost_function_approx import cost_fn_a_approx
 from sampling import sample_sine_wave
-import time
 
 # Global Parameters
 N = 20  # number of Fourier terms

@@ -6,12 +6,17 @@ Subject to a contraint p <= a(t) <= 1 for t* < t < 1.
 import numpy as np
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
+from typing import Any
+import time
+
+import os
+import sys
+sys.path.append(os.path.abspath("../cost_function"))
 import fourier as fr
 from cost_function_approx import cost_fn_a_approx
 from sampling import sample_sine_wave
 import trading_funcs as tf
-from typing import Any
-import time
+
 
 # Global Parameters
 N = 30  # number of Fourier terms

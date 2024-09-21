@@ -1,9 +1,12 @@
 # Class to store and process strategy information
 import numpy as np
-import fourier as fr
 import matplotlib.pyplot as plt
-from cost_function_approx import cost_fn_a_approx
 from scipy.optimize import minimize
+import os
+import sys
+sys.path.append(os.path.abspath("../cost_function"))
+from cost_function import fourier as fr
+from cost_function_approx import cost_fn_a_approx
 
 
 class EncodedStrategy:

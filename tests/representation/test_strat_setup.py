@@ -1,6 +1,10 @@
 import pytest as pt
-from strategy_class import EncodedStrategy
 import numpy as np
+import os
+import sys
+sys.path.append(os.path.abspath("../../representation"))
+sys.path.append(os.path.abspath("../../cost_function"))
+from strategy_class import EncodedStrategy
 
 
 @pt.mark.parametrize("n", range(1, 5))

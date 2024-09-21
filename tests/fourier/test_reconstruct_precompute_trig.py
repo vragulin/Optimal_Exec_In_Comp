@@ -1,5 +1,8 @@
 import pytest as pt
 import numpy as np
+import os
+import sys
+sys.path.append(os.path.abspath("../../cost_function"))
 import fourier as fr
 
 

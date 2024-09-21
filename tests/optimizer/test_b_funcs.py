@@ -1,6 +1,9 @@
 """ Test for b investor trading functions b(t)
 """
 import pytest as pt
+import os
+import sys
+sys.path.append(os.path.abspath("../../optimizer"))
 import trading_funcs as tf
 
 

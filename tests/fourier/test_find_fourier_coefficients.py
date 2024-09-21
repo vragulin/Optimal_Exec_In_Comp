@@ -1,6 +1,9 @@
 import pytest as pt
-import fourier as fr
 import numpy as np
+import os
+import sys
+sys.path.append(os.path.abspath("../../cost_function"))
+import fourier as fr
 
 
 def test_sin_coeff_zero():
