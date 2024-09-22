@@ -30,7 +30,7 @@ MAX_ABS_COST = 1e10
 N_PLOT_POINTS = 100
 N_ITER_LINES = 4
 LINE_STYLES = ['-', '--', '-.', ':', (0, (3, 1, 1, 1))]
-LABEL_OFFSET_MULT = 0.05
+LABEL_OFFSET_MULT = 0.09
 GAMMA = 1  # Put it at the end since it never changes
 
 # Which trader we are solving for
@@ -183,10 +183,10 @@ class State:
 
     @staticmethod
     def _plot_values(ax, t_values, a_theo, b_theo, a_approx, b_approx):
-        ax.scatter(t_values, a_theo, s=20, label="a (theo)", color="red")
-        ax.scatter(t_values, b_theo, s=20, label="b (theo)", color="grey")
-        ax.plot(t_values, a_approx, label="a (approx)", color="green", linestyle="-")
-        ax.plot(t_values, b_approx, label="b (approx)", color="blue", linestyle="-")
+        ax.scatter(t_values, a_theo, s=20, label=r"$a_{eq}(t)$", color="red")
+        ax.scatter(t_values, b_theo, s=20, label=r"$b_{eq}(t)$", color="grey")
+        ax.plot(t_values, a_approx, label=r"$a^*(t)$", color="green", linestyle="-")
+        ax.plot(t_values, b_approx, label=r"$b^*(t)$", color="blue", linestyle="-")
         ax.set_title(r"Theoretical and approximated trading strategies")
         ax.legend()
         ax.set_xlabel('t')
@@ -233,7 +233,7 @@ class State:
         a_theo, b_theo = res_coeffs['a_theo'], res_coeffs['b_theo']
 
         if start_finish_lines:
-            iter_idx = [0, len(iter_hist)-1]
+            iter_idx = [0, len(iter_hist) - 1]
         else:
             iter_idx = State._generate_idx_of_iters_to_plot(len(iter_hist), N_ITER_LINES)
 
@@ -244,18 +244,28 @@ class State:
             linestyle = LINE_STYLES[i_line % len(LINE_STYLES)]
             if start_finish_lines:
                 line_code = "init guess" if i_line == 0 else "solution"
+                if iter_idx == 0:
+                    label_a = r"$\Delta a^0(t)$, (init guess)"
+                    label_b = r"$\Delta b^0(t)$, (init guess)"
+                else:
+                    label_a = r"$\Delta a^{i_{max}}(t)$, (final)"
+                    label_b = r"$\Delta b^{i_{max}}(t)$, (final)"
             else:
                 iter_code = (iter_idx + 1) // 2
                 line_code = f"iter={iter_code}"
+                label_a = r"$\Delta a(t)$, " + line_code
+                label_b = r"$\Delta b(t)$, " + line_code
 
-            ax.plot(t_values, a_diffs, label=r"$\Delta a(t)$, " + line_code,
+            ax.plot(t_values, a_diffs, label=label_a,
                     color="red", linestyle=linestyle)
-            ax.plot(t_values, b_diffs, label=r"$\Delta b(t)$, " + line_code,
+            ax.plot(t_values, b_diffs, label=label_b,
                     color="blue", linestyle=linestyle)
-            ax.set_title("Convergence to Theoretical Value\n" +
-                         f"Diffs between approx. and theo. a(t),b(t) curves")
+
+            ax.set_title("Solver Approximations vs. Equilibrium\n" +
+                         "after i solver iterations.\n" +
+                         r"$\Delta a = a_{eq} - a^i$, $\Delta b = b_{eq} - b^i$")
             ax.set_xlabel('t')
-            ax.set_ylabel('a(t), b(t) residuals vs. theoretical')
+            ax.set_ylabel('a(t), b(t) residuals vs. equilibrium')
         ax.legend()
         ax.grid()
 
@@ -295,7 +305,7 @@ class State:
         b_res = [abs(i.b_cost - b_cost_theo) for i in iter_hist]
         # Plot the points as circles
         t_values = np.linspace(0, 1, N_PLOT_POINTS)
-        ax.scatter(a_res[1:-1], b_res[1:-1], color='darkblue', s=20, label=r'$|\Delta A|, |\Delta B|$', alpha=0.4)
+        ax.scatter(a_res[1:-1], b_res[1:-1], color='darkblue', s=20, label=r'$|\Delta c_a|, |\Delta c_b|$', alpha=0.4)
 
         # Connect the points with lines
         ax.plot(a_res, b_res, color='darkblue', linestyle='-', linewidth=1, alpha=0.4)
@@ -311,10 +321,10 @@ class State:
         ax.text(a_res[-1] + x_offset, b_res[-1], 'solution', fontsize=12, ha='left',
                 color='black', weight='bold')
 
-        ax.set_xlabel(r'$|A_{appox}-A_{theo}|$')
-        ax.set_ylabel(r'$|B_{appox}-B_{theo}|$')
+        ax.set_xlabel(r'$|c(a^i)-c(a_{eq})|$')
+        ax.set_ylabel(r'$|c(b^i)-c(a_{eq})|$')
         ax.set_title('Absolute Diff. between Approx. and Theo. Costs\n'
-                     r'$|A_{appox}-A_{theo}|$ vs. $|B_{approx} - B_{theo}|$')
+                     r'$\Delta c_a =|c(a^i)-c(a_{eq})|$ vs. $\Delta c_b = |c(b^i)-c(a_{eq})|$')
         ax.legend()
 
     @staticmethod
