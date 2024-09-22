@@ -1,40 +1,49 @@
-"""  Numerically solving for the two-trader equilibrium
-    To ensure good convergence choose N > kappa + 10, since curves are less smooth
+"""  Run optimization for different values of N and compare the quality fo the approximation
 """
-# ToDo - refactor to change LAMBDA, KAPPA from global to parameters.  Otherwise class State can't be used in other
-#        scripts
 import numpy as np
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 import time
-from typing import Any, List, Dict
+from typing import Any, List, Dict, Tuple
 import trading_funcs as tf
 import os
 import sys
+import pickle
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.abspath(os.path.join(current_dir, '..', 'cost_function')))
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.abspath(os.path.join(CURRENT_DIR, '..', 'cost_function')))
 import cost_function_approx as ca
 import fourier as fr
 
 # Parameters and Constants
-LAMBD = 1
-KAPPA = 25
+LAMBD = 5
+KAPPA = 20
+N_LIST = [5, 7, 9, 12, 15, 20, 25, 30, 50]
+IDX_TO_PLOT = [0, 1]  #, 4, 8]  # , 1, 2, 3, 4]
 
-DEFAULT_N = 35
-TOL_COEFFS = 1e-4
+DEFAULT_N = 7
+TOL_COEFFS = 1e-3
 TOL_COSTS = TOL_COEFFS
 FRACTION_MOVE = 0.2
 MAX_ITER = 250
 MAX_ABS_COST = 1e10
 N_PLOT_POINTS = 100
 N_ITER_LINES = 4
-LINE_STYLES = ['-', '--', '-.', ':', (0, (3, 1, 1, 1))]
-LABEL_OFFSET_MULT = 0.05
+LINE_STYLES = ['-', '-.', ':', (0, (3, 1, 1, 1)), '--']
+LINE_MARKERS = ['v', 'o', 'x', 's', '^']
 GAMMA = 1  # Put it at the end since it never changes
 
 # Which trader we are solving for
 TRADER_A, TRADER_B = range(2)
+
+# Simulaton paramters
+REBUILD_SIM_DATA = True  # If false, load from data file
+SIM_RESULTS_DIR = "../results/sim_results"
+SIM_FILE_NAME = f"sim_data_l{LAMBD}_k{KAPPA}.pkl"
+PLOT_TRADERS = [TRADER_A, TRADER_B]  # , TRADER_B]
+TRADER_THEO_COLORS = ['darkred', 'royalblue']
+TRADER_COLORS = {0: ['red', 'firebrick', 'indianred', 'lightcoral', 'salmon'],
+                 1: ['blue', 'deepskyblue', 'dodgerblue', 'steelblue', 'lightblue']}
 
 
 class State:
@@ -218,7 +227,7 @@ class State:
         a_theo, b_theo = res_coeffs['a_theo'], res_coeffs['b_theo']
 
         if start_finish_lines:
-            iter_idx = [0, len(iter_hist)-1]
+            iter_idx = [0, len(iter_hist) - 1]
         else:
             iter_idx = State._generate_idx_of_iters_to_plot(len(iter_hist), N_ITER_LINES)
 
@@ -323,11 +332,89 @@ class State:
         plt.show()
 
 
-def main():
+def plot_2x2(sims: List[State]):
+    """ Generate a 2x2 graph plot"""
+    fig, axs = plt.subplots(2, 2, figsize=(10, 10))
+    plt.suptitle("Approximation Quality vs. Number of Fourier Terms\n" +
+                 r"Two-Trader Equilibrium: $\kappa$" + f"={KAPPA}, " + r"$\lambda$" + f"={LAMBD}")
+    plot_schedules(sims, axs[0, 0])
+    # self.plot_state_space(iter_hist, axs[1, 0])
+    # self.plot_func_convergence(iter_hist, res_coeffs, axs[0, 1])
+    # self.plot_state_space_v_theo(iter_hist, res_coeffs, axs[1, 1])
+    plt.tight_layout(rect=(0., 0.01, 1., 0.97))
+    plt.show()
+
+
+def plot_schedules(sims: list, ax: Any) -> None:
+    """
+    :param sims:  list of simulation results
+    :param ax: pointed to the subplot
+    :return:
+    """
+    t_values = np.linspace(0, 1, N_PLOT_POINTS)
+    trader_dict = {}  # data dictionary
+    for trader in PLOT_TRADERS:
+        theo = State.calculate_theoretical_values(t_values, KAPPA, LAMBD, trader_a=(trader == TRADER_A))
+        trader_code = "A" if trader == TRADER_A else "B"
+        color = TRADER_COLORS[trader]
+        ax.plot(t_values, theo, label=trader_code + " theo", color=TRADER_THEO_COLORS[trader])
+
+        for i, idx in enumerate(IDX_TO_PLOT):
+            state, series_dict = sims[N_LIST[i]]
+            approx_vals = series_dict[f'{trader_code.lower()}_approx']
+            # linestyle = LINE_STYLES[(i + 1) % len(LINE_STYLES)]
+            marker = LINE_MARKERS[i % len(LINE_MARKERS)]
+            color = TRADER_COLORS[trader][i]
+            ax.scatter(t_values, approx_vals, s=20, label=trader_code + f" approx, N={N_LIST[idx]}",
+                       color=color, marker=marker, alpha=0.5)
+
+    ax.set_title(r"Theoretical and Approximated Trading Schedules")
+    ax.legend()
+    ax.set_xlabel('t')
+    ax.set_ylabel('a(t), b(t)')
+    ax.grid()
+
+
+def _pickle_file_path(make_dirs: bool = False):
+    # Define the directory and filename
+    results_dir = os.path.join(CURRENT_DIR, SIM_RESULTS_DIR)
+    # timestamp = datetime.now().strftime('%Y%m%d-%H%M')
+    filename = SIM_FILE_NAME
+    file_path = os.path.join(results_dir, filename)
+
+    # Create the directory if it does not exist
+    if make_dirs:
+        os.makedirs(results_dir, exist_ok=True)
+
+    return file_path
+
+
+def _save_pickled_results(data: Any):
+    # Define the directory and filename
+    file_path = _pickle_file_path(make_dirs=True)
+
+    # Save the pickled serialization of sim_results
+    with open(file_path, 'wb') as file:
+        pickle.dump(data, file)
+
+
+def _load_pickled_results() -> Any:
+    # Define the directory and filename
+    file_path = _pickle_file_path(make_dirs=False)
+
+    # Check if the file exists and load the pickled file
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f'The file {file_path} does not exist.')
+
+    with open(file_path, 'rb') as file:
+        data = pickle.load(file)
+    return data
+
+
+def run_one_n(n: int) -> Tuple[State, dict]:
     # Initialize state
-    state = State()
-    print("Initial State")
-    print(state)
+    print(f"\nStart optimization for n={n} terms:")
+    state = State(n=n)
 
     # Initialize the loop
     iter_hist = [state]
@@ -361,7 +448,25 @@ def main():
     print("\nFinal State:")
     print(state)
 
-    state.plot_results(iter_hist)
+    # fig, axs = plt.subplots(1, 1, figsize=(10, 10))
+    series_dict = state.check_v_theo(LAMBD, KAPPA, ax=None)
+    # plt.show()
+    return state, series_dict
+
+
+def main():
+    if REBUILD_SIM_DATA:
+        sim_results = {}
+
+        for n in N_LIST:
+            sim_results[n] = run_one_n(n)
+
+        _save_pickled_results(sim_results)
+
+    else:
+        sim_results = _load_pickled_results()
+
+    plot_2x2(sim_results)
 
 
 if __name__ == "__main__":
