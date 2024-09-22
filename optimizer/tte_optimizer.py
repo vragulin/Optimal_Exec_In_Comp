@@ -21,11 +21,11 @@ import fourier as fr
 LAMBD = 1
 KAPPA = 25
 
-DEFAULT_N = 35
+DEFAULT_N = 10
 TOL_COEFFS = 1e-4
 TOL_COSTS = TOL_COEFFS
 FRACTION_MOVE = 0.2
-MAX_ITER = 250
+MAX_ITER = 100
 MAX_ABS_COST = 1e10
 N_PLOT_POINTS = 100
 N_ITER_LINES = 4
@@ -154,11 +154,26 @@ class State:
         if ax is not None:
             self._plot_values(ax, t_values, a_theo, b_theo, a_approx, b_approx)
 
+        a_diff = np.array(a_theo) - np.array(a_approx)
+        b_diff = np.array(b_theo) - np.array(b_approx)
+
+        l2_a = np.linalg.norm(a_diff, 2)
+        l2_b = np.linalg.norm(b_diff, 2)
+
+        l2_a_chk = np.sqrt(a_diff @ a_diff)
+        l2_b_chk = np.sqrt(b_diff @ b_diff)
+
+        print("\n Check manually-computed L2 norm vs. np.linalg.norm()")
+        print(f"L2(a) = {l2_a}, L2_chk(a) = {l2_a_chk}")
+        print(f"L2(b) = {l2_b}, L2_chk(b) = {l2_b_chk}")
+
         return {
             "a_theo": a_theo,
             "b_theo": b_theo,
             "a_approx": a_approx,
-            "b_approx": b_approx
+            "b_approx": b_approx,
+            "L2_a": l2_a,
+            "L2_b": l2_b
         }
 
     @staticmethod
@@ -168,11 +183,11 @@ class State:
 
     @staticmethod
     def _plot_values(ax, t_values, a_theo, b_theo, a_approx, b_approx):
-        ax.scatter(t_values, a_theo, s=20, label="a theo", color="red")
-        ax.scatter(t_values, b_theo, s=20, label="b theo", color="grey")
-        ax.plot(t_values, a_approx, label="a approx", color="green", linestyle="-")
-        ax.plot(t_values, b_approx, label="b approx", color="blue", linestyle="-")
-        ax.set_title(r"Theoretical and Approximated Trading Schedules")
+        ax.scatter(t_values, a_theo, s=20, label="a (theo)", color="red")
+        ax.scatter(t_values, b_theo, s=20, label="b (theo)", color="grey")
+        ax.plot(t_values, a_approx, label="a (approx)", color="green", linestyle="-")
+        ax.plot(t_values, b_approx, label="b (approx)", color="blue", linestyle="-")
+        ax.set_title(r"Theoretical and approximated trading strategies")
         ax.legend()
         ax.set_xlabel('t')
         ax.set_ylabel('a(t), b(t)')
@@ -180,7 +195,7 @@ class State:
 
     @staticmethod
     def plot_state_space(iter_hist: List["State"], ax: Any) -> None:
-        """ Plot evolution of costs for A qnd B over iterations
+        """ Plot evolution of costs for A and B over iterations
         """
         a_costs = [i.a_cost for i in iter_hist]
         b_costs = [i.b_cost for i in iter_hist]
@@ -241,8 +256,8 @@ class State:
                          f"Diffs between approx. and theo. a(t),b(t) curves")
             ax.set_xlabel('t')
             ax.set_ylabel('a(t), b(t) residuals vs. theoretical')
-            ax.legend()
-            ax.grid()
+        ax.legend()
+        ax.grid()
 
     @staticmethod
     def _diff_vs_theo(iter_hist: List["State"], i: int, t_values: np.ndarray,
@@ -315,10 +330,11 @@ class State:
                      r"$\kappa$" + f"={KAPPA}, " + r"$\lambda$" + f"={LAMBD}\n" +
                      f"{self.n} Fourier terms, " +
                      f"{len(iter_hist) // 2} solver iterations", fontsize=16)
-        res_coeffs = self.check_v_theo(LAMBD, KAPPA, axs[0, 0])
+        stats = self.check_v_theo(LAMBD, KAPPA, axs[0, 0])
+        print(f"\nAccuracy: L2(a) = {stats['L2_a']:.5f}, L2(b) = {stats['L2_b']:.5f}")
         self.plot_state_space(iter_hist, axs[1, 0])
-        self.plot_func_convergence(iter_hist, res_coeffs, axs[0, 1])
-        self.plot_state_space_v_theo(iter_hist, res_coeffs, axs[1, 1])
+        self.plot_func_convergence(iter_hist, stats, axs[0, 1])
+        self.plot_state_space_v_theo(iter_hist, stats, axs[1, 1])
         plt.tight_layout(rect=(0., 0.01, 1., 0.97))
         plt.show()
 
