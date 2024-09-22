@@ -322,9 +322,9 @@ class State:
                 color='black', weight='bold')
 
         ax.set_xlabel(r'$|c(a^i)-c(a_{eq})|$')
-        ax.set_ylabel(r'$|c(b^i)-c(a_{eq})|$')
-        ax.set_title('Absolute Diff. between Approx. and Theo. Costs\n'
-                     r'$\Delta c_a =|c(a^i)-c(a_{eq})|$ vs. $\Delta c_b = |c(b^i)-c(a_{eq})|$')
+        ax.set_ylabel(r'$|c(b^i)-c(b_{eq})|$')
+        ax.set_title('Absolute Diff. between Approx. and Equil. Costs\n'
+                     r'$\Delta c_a =|c(a^i)-c(a_{eq})|$ vs. $\Delta c_b = |c(b^i)-c(b_{eq})|$')
         ax.legend()
 
     @staticmethod
