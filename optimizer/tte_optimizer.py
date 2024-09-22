@@ -8,20 +8,22 @@ from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 import time
 from typing import Any, List, Dict
-import trading_funcs as tf
 import os
 import sys
+import pickle
+import config as cfg
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.abspath(os.path.join(current_dir, '..', 'cost_function')))
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.abspath(os.path.join(CURRENT_DIR, '..', 'cost_function')))
+import trading_funcs as tf
 import cost_function_approx as ca
 import fourier as fr
 
 # Parameters and Constants
-LAMBD = 1
-KAPPA = 25
+LAMBD = 5
+KAPPA = 1
 
-DEFAULT_N = 10
+DEFAULT_N = 15
 TOL_COEFFS = 1e-4
 TOL_COSTS = TOL_COEFFS
 FRACTION_MOVE = 0.2
@@ -35,6 +37,9 @@ GAMMA = 1  # Put it at the end since it never changes
 
 # Which trader we are solving for
 TRADER_A, TRADER_B = range(2)
+
+# Parameters to save simulation results
+SAVE_RESULTS = True
 
 
 class State:
@@ -160,12 +165,12 @@ class State:
         l2_a = np.linalg.norm(a_diff, 2)
         l2_b = np.linalg.norm(b_diff, 2)
 
-        l2_a_chk = np.sqrt(a_diff @ a_diff)
-        l2_b_chk = np.sqrt(b_diff @ b_diff)
-
-        print("\n Check manually-computed L2 norm vs. np.linalg.norm()")
-        print(f"L2(a) = {l2_a}, L2_chk(a) = {l2_a_chk}")
-        print(f"L2(b) = {l2_b}, L2_chk(b) = {l2_b_chk}")
+        # l2_a_chk = np.sqrt(a_diff @ a_diff)
+        # l2_b_chk = np.sqrt(b_diff @ b_diff)
+        #
+        # print("\n Check manually-computed L2 norm vs. np.linalg.norm()")
+        # print(f"L2(a) = {l2_a}, L2_chk(a) = {l2_a_chk}")
+        # print(f"L2(b) = {l2_b}, L2_chk(b) = {l2_b_chk}")
 
         return {
             "a_theo": a_theo,
@@ -334,7 +339,7 @@ class State:
         iter_idx.append(n_iter - 1)
         return iter_idx
 
-    def plot_results(self, iter_hist: List["State"]):
+    def plot_results(self, iter_hist: List["State"]) -> dict:
         fig, axs = plt.subplots(2, 2, figsize=(10, 10))
         plt.suptitle("Two-Trader Equilibrium Strategies, " +
                      r"$\kappa$" + f"={KAPPA}, " + r"$\lambda$" + f"={LAMBD}\n" +
@@ -347,6 +352,44 @@ class State:
         self.plot_state_space_v_theo(iter_hist, stats, axs[1, 1])
         plt.tight_layout(rect=(0., 0.01, 1., 0.97))
         plt.show()
+        return stats
+
+
+def pickle_file_path(make_dirs: bool = False):
+    # Define the directory and filename
+    results_dir = os.path.join(CURRENT_DIR, cfg.SIM_RESULTS_DIR)
+    # timestamp = datetime.now().strftime('%Y%m%d-%H%M')
+    filename = cfg.SIM_FILE_NAME.format(
+        LAMBD=LAMBD, KAPPA=KAPPA, N=DEFAULT_N)
+    file_path = os.path.join(results_dir, filename)
+
+    # Create the directory if it does not exist
+    if make_dirs:
+        os.makedirs(results_dir, exist_ok=True)
+
+    return file_path
+
+
+def save_pickled_results(data: Any):
+    # Define the directory and filename
+    file_path = pickle_file_path(make_dirs=True)
+
+    # Save the pickled serialization of sim_results
+    with open(file_path, 'wb') as file:
+        pickle.dump(data, file)
+
+
+def load_pickled_results() -> Any:
+    # Define the directory and filename
+    file_path = pickle_file_path(make_dirs=False)
+
+    # Check if the file exists and load the pickled file
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f'The file {file_path} does not exist.')
+
+    with open(file_path, 'rb') as file:
+        data = pickle.load(file)
+    return data
 
 
 def main():
@@ -387,7 +430,11 @@ def main():
     print("\nFinal State:")
     print(state)
 
-    state.plot_results(iter_hist)
+    sim_stats = state.plot_results(iter_hist)
+
+    # Save results
+    if SAVE_RESULTS:
+        save_pickled_results({'state': state, 'iter_hist': iter_hist, 'stats': sim_stats})
 
 
 if __name__ == "__main__":
