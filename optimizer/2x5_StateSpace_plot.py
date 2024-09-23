@@ -1,4 +1,7 @@
-""" Generate a 2x5 plot using previously saved simulation results"""
+""" Generate a 2x5 plot using previously saved simulation results
+    The program expects data for every scenario in a pickle file in the results directory.
+    (locaton and file nae format specified in config.py)
+"""
 import numpy as np
 import matplotlib.pyplot as plt
 import os
@@ -16,16 +19,26 @@ import config as cfg
 
 # Global Parameters
 Params = namedtuple('Parameters', ['lambd', 'kappa', 'n'])
+# sim_runs_params = [
+#     Params(5, 1, 20),
+#     Params(10, 1, 20),
+#     Params(2, 20, 30),
+#     Params(1, 20, 30),
+#     Params(1.5, 30, 40),
+# ]
 sim_runs_params = [
-    Params(5, 1, 20),
-    Params(10, 1, 20),
+    Params(5, 1, 10),
+    Params(10, 1, 10),
+    Params(2, 20, 10),
     Params(1, 20, 10),
-    Params(1, 20, 30),
-    Params(1, 40, 50),
+    Params(1.5, 30, 10),
 ]
 
 # Plot parameters
 LABEL_OFFSET_MULT = 0.09
+
+# Suffix to identify the relevant the data files
+DATA_FILE_SUFFIX = ""  # "" for unconstrained, "_cons" for constrained
 
 
 class State:
@@ -148,8 +161,8 @@ class State:
         a_diff = np.array(a_theo) - np.array(a_approx)
         b_diff = np.array(b_theo) - np.array(b_approx)
 
-        l2_a = np.linalg.norm(a_diff, 2)
-        l2_b = np.linalg.norm(b_diff, 2)
+        l2_a = np.linalg.norm(a_diff, 2) / np.sqrt(len(a_diff))
+        l2_b = np.linalg.norm(b_diff, 2) / np.sqrt(len(b_diff))
 
         # l2_a_chk = np.sqrt(a_diff @ a_diff)
         # l2_b_chk = np.sqrt(b_diff @ b_diff)
@@ -179,7 +192,7 @@ def pickle_file_path(p: Params) -> str:
 
     # timestamp = datetime.now().strftime('%Y%m%d-%H%M')
     filename = cfg.SIM_FILE_NAME.format(
-        LAMBD=p.lambd, KAPPA=p.kappa, N=p.n)
+        LAMBD=p.lambd, KAPPA=p.kappa, N=p.n, SUFFIX=DATA_FILE_SUFFIX)
     file_path = os.path.join(results_dir, filename)
 
     return file_path
@@ -214,8 +227,8 @@ def plot_eq_and_approx_strats(results: dict, params: Params, ax: Any) -> dict:
     a_diff = np.array(a_theo) - np.array(a_approx)
     b_diff = np.array(b_theo) - np.array(b_approx)
 
-    l2_a = np.linalg.norm(a_diff, 2)
-    l2_b = np.linalg.norm(b_diff, 2)
+    l2_a = np.linalg.norm(a_diff, 2) / np.sqrt(len(a_diff))
+    l2_b = np.linalg.norm(b_diff, 2) / np.sqrt(len(b_diff))
 
     if ax is not None:
         ax.scatter(t_values, a_theo, s=20, label=r"$a_{eq}(t)$", color="red")
@@ -225,10 +238,10 @@ def plot_eq_and_approx_strats(results: dict, params: Params, ax: Any) -> dict:
         ax.set_title(r"$\kappa$" + f"={kappa}, " + r"$\lambda$" + f"={lambd}, " +
                      f"n={state.n}\n" +
                      f"{n_iter} iterations\n" +
-                     # r"$L_2(a_{eq}-a^*)=$" + f"{l2_a:.3f}," +
-                     # r"$L_2(b_{eq}-b^*)=$" + f"{l2_b:.3f}",
-                     r"$L_2(a_{diff})=$" + f"{l2_a:.3f}, " +
-                     r"$L_2(b_{diff})=$" + f"{l2_b:.3f}",
+                     # r"$L_2(a_{eq}-a^*)=$" + f"{l2_a:.4f}," +
+                     # r"$L_2(b_{eq}-b^*)=$" + f"{l2_b:.4f}",
+                     r"$L_2(a_{diff})=$" + f"{l2_a:.4f}, " +
+                     r"$L_2(b_{diff})=$" + f"{l2_b:.4f}",
                      fontsize=12)
         ax.legend()
         ax.set_xlabel('t')

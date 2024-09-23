@@ -1,5 +1,5 @@
 """  Numerically solving for the two-trader equilibrium
-    To ensure good convergence choose N > kappa + 10, since curves are less smooth
+     Implements 2 contstraints:  overbuying and short selling for both traders.
 """
 # ToDo - refactor to change LAMBDA, KAPPA from global to parameters.  Otherwise class State can't be used in other
 #        scripts
@@ -20,10 +20,10 @@ import cost_function_approx as ca
 import fourier as fr
 
 # Parameters and Constants
-LAMBD = 5
-KAPPA = 1
+LAMBD = 1.5
+KAPPA = 30
+N = 10
 
-DEFAULT_N = 15
 TOL_COEFFS = 1e-4
 TOL_COSTS = TOL_COEFFS
 FRACTION_MOVE = 0.2
@@ -33,6 +33,7 @@ N_PLOT_POINTS = 100
 N_ITER_LINES = 4
 LINE_STYLES = ['-', '--', '-.', ':', (0, (3, 1, 1, 1))]
 LABEL_OFFSET_MULT = 0.09
+DEFAULT_N = 15
 GAMMA = 1  # Put it at the end since it never changes
 
 # Which trader we are solving for
@@ -40,12 +41,13 @@ TRADER_A, TRADER_B = range(2)
 
 # Parameters to save simulation results
 SAVE_RESULTS = True
+DATA_FILE_SUFFIX = ""
 
 
 class State:
 
-    def __init__(self, a_coeff: np.ndarray = None, b_coeff: np.ndarray = None, n: int = None,
-                 calc_costs: bool = True):
+    def __init__(self, a_coeff: np.ndarray = None, b_coeff: np.ndarray = None,
+                 n: int = DEFAULT_N, calc_costs: bool = True):
         self.n = self._initialize_n(a_coeff, b_coeff, n)
         self.a_coeff = self._initialize_coeff(a_coeff, self.n)
         self.b_coeff = self._initialize_coeff(b_coeff, self.n)
@@ -156,21 +158,14 @@ class State:
         a_approx = [fr.reconstruct_from_sin(t, self.a_coeff) + GAMMA * t for t in t_values]
         b_approx = [fr.reconstruct_from_sin(t, self.b_coeff) + GAMMA * t for t in t_values]
 
-        if ax is not None:
-            self._plot_values(ax, t_values, a_theo, b_theo, a_approx, b_approx)
-
         a_diff = np.array(a_theo) - np.array(a_approx)
         b_diff = np.array(b_theo) - np.array(b_approx)
 
-        l2_a = np.linalg.norm(a_diff, 2)
-        l2_b = np.linalg.norm(b_diff, 2)
+        l2_a = np.linalg.norm(a_diff, 2)/np.sqrt(len(a_diff))
+        l2_b = np.linalg.norm(b_diff, 2)/np.sqrt(len(b_diff))
 
-        # l2_a_chk = np.sqrt(a_diff @ a_diff)
-        # l2_b_chk = np.sqrt(b_diff @ b_diff)
-        #
-        # print("\n Check manually-computed L2 norm vs. np.linalg.norm()")
-        # print(f"L2(a) = {l2_a}, L2_chk(a) = {l2_a_chk}")
-        # print(f"L2(b) = {l2_b}, L2_chk(b) = {l2_b_chk}")
+        if ax is not None:
+            self._plot_values(ax, t_values, a_theo, b_theo, a_approx, b_approx, l2_a, l2_b)
 
         return {
             "a_theo": a_theo,
@@ -187,12 +182,15 @@ class State:
         return [tf.equil_2trader(t, params) for t in t_values]
 
     @staticmethod
-    def _plot_values(ax, t_values, a_theo, b_theo, a_approx, b_approx):
+    def _plot_values(ax, t_values, a_theo, b_theo, a_approx, b_approx, l2_a, l2_b):
         ax.scatter(t_values, a_theo, s=20, label=r"$a_{eq}(t)$", color="red")
         ax.scatter(t_values, b_theo, s=20, label=r"$b_{eq}(t)$", color="grey")
         ax.plot(t_values, a_approx, label=r"$a^*(t)$", color="green", linestyle="-")
         ax.plot(t_values, b_approx, label=r"$b^*(t)$", color="blue", linestyle="-")
-        ax.set_title(r"Theoretical and approximated trading strategies")
+        ax.set_title("Theoretical and approximated trading strategies\n" +
+                     r"$L_2(a_{diff})=$" + f"{l2_a:.4f}, " +
+                     r"$L_2(b_{diff})=$" + f"{l2_b:.4f}",
+                     fontsize=12)
         ax.legend()
         ax.set_xlabel('t')
         ax.set_ylabel('a(t), b(t)')
@@ -268,7 +266,7 @@ class State:
 
             ax.set_title("Solver Approximations vs. Equilibrium\n" +
                          "after i solver iterations.\n" +
-                         r"$\Delta a = a_{eq} - a^i$, $\Delta b = b_{eq} - b^i$")
+                         r"$\Delta a^i = a_{eq} - a^i$, $\Delta b^i = b_{eq} - b^i$")
             ax.set_xlabel('t')
             ax.set_ylabel('a(t), b(t) residuals vs. equilibrium')
         ax.legend()
@@ -310,7 +308,8 @@ class State:
         b_res = [abs(i.b_cost - b_cost_theo) for i in iter_hist]
         # Plot the points as circles
         t_values = np.linspace(0, 1, N_PLOT_POINTS)
-        ax.scatter(a_res[1:-1], b_res[1:-1], color='darkblue', s=20, label=r'$|\Delta c_a|, |\Delta c_b|$', alpha=0.4)
+        ax.scatter(a_res[1:-1], b_res[1:-1], color='darkblue', s=20, label=r'$|\Delta c^i_a|, |\Delta c^i_b|$',
+                   alpha=0.4)
 
         # Connect the points with lines
         ax.plot(a_res, b_res, color='darkblue', linestyle='-', linewidth=1, alpha=0.4)
@@ -329,7 +328,7 @@ class State:
         ax.set_xlabel(r'$|c(a^i)-c(a_{eq})|$')
         ax.set_ylabel(r'$|c(b^i)-c(b_{eq})|$')
         ax.set_title('Absolute Diff. between Approx. and Equil. Costs\n'
-                     r'$\Delta c_a =|c(a^i)-c(a_{eq})|$ vs. $\Delta c_b = |c(b^i)-c(b_{eq})|$')
+                     r'$\Delta c^i_a =|c(a^i)-c(a_{eq})|$ vs. $\Delta c^i_b = |c(b^i)-c(b_{eq})|$')
         ax.legend()
 
     @staticmethod
@@ -360,7 +359,7 @@ def pickle_file_path(make_dirs: bool = False):
     results_dir = os.path.join(CURRENT_DIR, cfg.SIM_RESULTS_DIR)
     # timestamp = datetime.now().strftime('%Y%m%d-%H%M')
     filename = cfg.SIM_FILE_NAME.format(
-        LAMBD=LAMBD, KAPPA=KAPPA, N=DEFAULT_N)
+        LAMBD=LAMBD, KAPPA=KAPPA, N=N, SUFFIX=DATA_FILE_SUFFIX)
     file_path = os.path.join(results_dir, filename)
 
     # Create the directory if it does not exist
@@ -394,7 +393,7 @@ def load_pickled_results() -> Any:
 
 def main():
     # Initialize state
-    state = State()
+    state = State(n=N)
     print("Initial State")
     print(state)
 
