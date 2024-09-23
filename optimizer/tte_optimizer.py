@@ -20,13 +20,13 @@ import cost_function_approx as ca
 import fourier as fr
 
 # Parameters and Constants
-LAMBD = 1.5
-KAPPA = 30
-N = 10
+LAMBD = 1
+KAPPA = 20
+N = 20
 
 TOL_COEFFS = 1e-4
 TOL_COSTS = TOL_COEFFS
-FRACTION_MOVE = 0.2
+FRACTION_MOVE = 0.8  # Fraction of the way to move towards the new solution, input as a float e.g. 1.0
 MAX_ITER = 100
 MAX_ABS_COST = 1e10
 N_PLOT_POINTS = 100
@@ -41,7 +41,7 @@ TRADER_A, TRADER_B = range(2)
 
 # Parameters to save simulation results
 SAVE_RESULTS = True
-DATA_FILE_SUFFIX = ""
+DATA_FILE_SUFFIX = f"_g{FRACTION_MOVE}"
 
 
 class State:
@@ -183,17 +183,17 @@ class State:
 
     @staticmethod
     def _plot_values(ax, t_values, a_theo, b_theo, a_approx, b_approx, l2_a, l2_b):
-        ax.scatter(t_values, a_theo, s=20, label=r"$a_{eq}(t)$", color="red")
-        ax.scatter(t_values, b_theo, s=20, label=r"$b_{eq}(t)$", color="grey")
+        ax.scatter(t_values, a_theo, s=10, label=r"$a_{eq}(t)$", color="red")
+        ax.scatter(t_values, b_theo, s=10, label=r"$b_{eq,{\lambda}}(t)$", color="grey")
         ax.plot(t_values, a_approx, label=r"$a^*(t)$", color="green", linestyle="-")
-        ax.plot(t_values, b_approx, label=r"$b^*(t)$", color="blue", linestyle="-")
+        ax.plot(t_values, b_approx, label=r"$b^*_{\lambda}(t)$", color="blue", linestyle="-")
         ax.set_title("Theoretical and approximated trading strategies\n" +
                      r"$L_2(a_{diff})=$" + f"{l2_a:.4f}, " +
                      r"$L_2(b_{diff})=$" + f"{l2_b:.4f}",
                      fontsize=12)
         ax.legend()
         ax.set_xlabel('t')
-        ax.set_ylabel('a(t), b(t)')
+        ax.set_ylabel(r'$a(t), b_{\lambda}(t)$')
         ax.grid()
 
     @staticmethod
@@ -249,15 +249,15 @@ class State:
                 line_code = "init guess" if i_line == 0 else "solution"
                 if iter_idx == 0:
                     label_a = r"$\Delta a^0(t)$, (init guess)"
-                    label_b = r"$\Delta b^0(t)$, (init guess)"
+                    label_b = r"$\Delta b^0_{\lambda}(t)$, (init guess)"
                 else:
                     label_a = r"$\Delta a^{i_{max}}(t)$, (final)"
-                    label_b = r"$\Delta b^{i_{max}}(t)$, (final)"
+                    label_b = r"$\Delta b^{i_{max}}_{\lambda}(t)$, (final)"
             else:
                 iter_code = (iter_idx + 1) // 2
                 line_code = f"iter={iter_code}"
                 label_a = r"$\Delta a(t)$, " + line_code
-                label_b = r"$\Delta b(t)$, " + line_code
+                label_b = r"$\Delta b_{\lambda}(t)$, " + line_code
 
             ax.plot(t_values, a_diffs, label=label_a,
                     color="red", linestyle=linestyle)
@@ -266,9 +266,9 @@ class State:
 
             ax.set_title("Solver Approximations vs. Equilibrium\n" +
                          "after i solver iterations.\n" +
-                         r"$\Delta a^i = a_{eq} - a^i$, $\Delta b^i = b_{eq} - b^i$")
+                         r"$\Delta a^i = a_{eq} - a^i$, $\Delta b^i_{\lambda} = b_{eq,{\lambda}} - b^i_{\lambda}$")
             ax.set_xlabel('t')
-            ax.set_ylabel('a(t), b(t) residuals vs. equilibrium')
+            ax.set_ylabel(r'$a(t), b_{\lambda}(t)$ residuals vs. equilibrium')
         ax.legend()
         ax.grid()
 
@@ -326,9 +326,9 @@ class State:
                 color='black', weight='bold')
 
         ax.set_xlabel(r'$|c(a^i)-c(a_{eq})|$')
-        ax.set_ylabel(r'$|c(b^i)-c(b_{eq})|$')
+        ax.set_ylabel(r'$|c(b^i_{\lambda})-c(b_{eq,{\lambda}})|$')
         ax.set_title('Absolute Diff. between Approx. and Equil. Costs\n'
-                     r'$\Delta c^i_a =|c(a^i)-c(a_{eq})|$ vs. $\Delta c^i_b = |c(b^i)-c(b_{eq})|$')
+                     r'$\Delta c^i_a =|c(a^i)-c(a_{eq})|$ vs. $\Delta c^i_b = |c(b^i_{\lambda})-c(b_{eq,{\lambda}})|$')
         ax.legend()
 
     @staticmethod

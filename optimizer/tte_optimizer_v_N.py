@@ -11,25 +11,22 @@ from typing import Any, List, Dict
 import os
 import sys
 import pickle
-from functools import partial
+import config as cfg
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.abspath(os.path.join(CURRENT_DIR, '..', 'cost_function')))
 import trading_funcs as tf
 import cost_function_approx as ca
 import fourier as fr
-import config as cfg
-from sampling import sample_sine_wave
 
 # Parameters and Constants
-LAMBD = 20
-KAPPA = 10
-N = 20
-OVERBUY = 3
+LAMBD = 5
+KAPPA = 20
+N = 21
 
 TOL_COEFFS = 1e-4
 TOL_COSTS = TOL_COEFFS
-FRACTION_MOVE = 0.5
+FRACTION_MOVE = 0.2  # Fraction of the way to move towards the new solution, input as a float e.g. 1.0
 MAX_ITER = 100
 MAX_ABS_COST = 1e10
 N_PLOT_POINTS = 100
@@ -37,22 +34,14 @@ N_ITER_LINES = 4
 LINE_STYLES = ['-', '--', '-.', ':', (0, (3, 1, 1, 1))]
 LABEL_OFFSET_MULT = 0.09
 DEFAULT_N = 15
-GAMMA = cfg.GAMMA  # Put it at the end since it never changes
+GAMMA = 1  # Put it at the end since it never changes
 
 # Which trader we are solving for
 TRADER_A, TRADER_B = range(2)
 
-# Constraints (level for traders A,B in order)
-CONS_OVERBUYING = (OVERBUY, OVERBUY)  # [3, 3]
-CONS_SHORT_SELL = (0, None)  # (None, None)  # [-1, 0]
-T_SAMPLE_PER_SEMI_WAVE = 3  # number of points to sample constraints
-
 # Parameters to save simulation results
 SAVE_RESULTS = True
-CONS_SUFFIX = f"o{CONS_OVERBUYING[0]}"
-
-# Global variables
-t_sample = None  # Points at whcih we sample the inequalities
+DATA_FILE_SUFFIX = ""  # we already save N as part of the filename
 
 
 class State:
@@ -80,7 +69,7 @@ class State:
 
     @staticmethod
     def _initialize_coeff(coeff: np.ndarray, n: int) -> np.ndarray:
-        return coeff if coeff is not None else np.zeros(n, dtype=float)
+        return coeff if coeff is not None else np.zeros(n)
 
     def _validate_coeff_lengths(self) -> None:
         if len(self.a_coeff) != len(self.b_coeff):
@@ -119,16 +108,11 @@ class State:
         """ Solve for the best response of one trader with respect to the other """
 
         cost_function, init_guess = self._get_cost_function_and_guess(solve)
-        constraints = self._get_constraints(solve)
-        if (constraints is not None) and any(cons_check := constraints['fun'](init_guess) <= 0):
-            print(f"Initial guess violates constraints: {cons_check}")
-            return self
-
         args = (self.a_coeff, self.b_coeff)
 
         # Minimize the cost function
         start_time = time.time()
-        result = minimize(cost_function, init_guess, args=args, constraints=constraints)
+        result = minimize(cost_function, init_guess, args=args)
         print(f"Optimization time = {(time.time() - start_time):.4f}s")
 
         # Generate a new updated state
@@ -149,40 +133,6 @@ class State:
                 lambda x, a_coeff, b_coeff: ca.cost_fn_b_approx(a_coeff, x, KAPPA, LAMBD),
                 self.b_coeff
             )
-
-    @staticmethod
-    def _get_constraints(solve: int):
-        """ Define optimizaton constraints
-        """
-        trader_idx = TRADER_A if solve == TRADER_A else TRADER_B
-
-        def constraint_function(x):
-            # Sample points
-            global t_sample
-            if t_sample is None:
-                t_sample = sample_sine_wave(list(range(1, len(x) + 1)), T_SAMPLE_PER_SEMI_WAVE)
-
-            strat_values = np.array([fr.reconstruct_from_sin(t, x) + cfg.GAMMA * t for t in t_sample])
-            const_list = []
-
-            if (lbound := CONS_SHORT_SELL[trader_idx]) is not None:
-                const_list.append(strat_values - lbound)
-            if (ubound := CONS_OVERBUYING[trader_idx]) is not None:
-                const_list.append(ubound - strat_values)
-
-            if len(const_list) > 0:
-                return np.concatenate(const_list)
-            else:
-                return np.ones(1)  # If there are no constraints, always return True
-
-        # Define the constraint set
-        if (CONS_OVERBUYING[trader_idx] is not None) or (CONS_SHORT_SELL[trader_idx] is not None):
-            return ({
-                'type': 'ineq',
-                'fun': constraint_function
-            })
-        else:
-            return None
 
     def _generate_new_state(self, solve: int, result_x):
         if solve == TRADER_A:
@@ -211,8 +161,8 @@ class State:
         a_diff = np.array(a_theo) - np.array(a_approx)
         b_diff = np.array(b_theo) - np.array(b_approx)
 
-        l2_a = np.linalg.norm(a_diff, 2) / np.sqrt(len(a_diff))
-        l2_b = np.linalg.norm(b_diff, 2) / np.sqrt(len(a_diff))
+        l2_a = np.linalg.norm(a_diff, 2)/np.sqrt(len(a_diff))
+        l2_b = np.linalg.norm(b_diff, 2)/np.sqrt(len(b_diff))
 
         if ax is not None:
             self._plot_values(ax, t_values, a_theo, b_theo, a_approx, b_approx, l2_a, l2_b)
@@ -233,17 +183,17 @@ class State:
 
     @staticmethod
     def _plot_values(ax, t_values, a_theo, b_theo, a_approx, b_approx, l2_a, l2_b):
-        ax.scatter(t_values, a_theo, s=20, label=r"$a_{eq}(t)$", color="red")
-        ax.scatter(t_values, b_theo, s=20, label=r"$b_{eq}(t)$", color="grey")
+        ax.scatter(t_values, a_theo, s=10, label=r"$a_{eq}(t)$", color="red")
+        ax.scatter(t_values, b_theo, s=10, label=r"$b_{eq,{\lambda}}(t)$", color="grey")
         ax.plot(t_values, a_approx, label=r"$a^*(t)$", color="green", linestyle="-")
-        ax.plot(t_values, b_approx, label=r"$b^*(t)$", color="blue", linestyle="-")
+        ax.plot(t_values, b_approx, label=r"$b^*_{\lambda}(t)$", color="blue", linestyle="-")
         ax.set_title("Theoretical and approximated trading strategies\n" +
                      r"$L_2(a_{diff})=$" + f"{l2_a:.4f}, " +
                      r"$L_2(b_{diff})=$" + f"{l2_b:.4f}",
                      fontsize=12)
         ax.legend()
         ax.set_xlabel('t')
-        ax.set_ylabel('a(t), b(t)')
+        ax.set_ylabel(r'$a(t), b_{\lambda}(t)$')
         ax.grid()
 
     @staticmethod
@@ -273,7 +223,7 @@ class State:
 
         ax.set_xlabel('Trader A cost')
         ax.set_ylabel('Trader B cost')
-        ax.set_title(f'Trading Cost Convergence to Solution\n'
+        ax.set_title(f'Trading Cost Convergence to Equilibrium\n'
                      f'State Space Diagram: (x,y) = (cost A, cost B)')
         ax.legend()
 
@@ -299,26 +249,26 @@ class State:
                 line_code = "init guess" if i_line == 0 else "solution"
                 if iter_idx == 0:
                     label_a = r"$\Delta a^0(t)$, (init guess)"
-                    label_b = r"$\Delta b^0(t)$, (init guess)"
+                    label_b = r"$\Delta b^0_{\lambda}(t)$, (init guess)"
                 else:
                     label_a = r"$\Delta a^{i_{max}}(t)$, (final)"
-                    label_b = r"$\Delta b^{i_{max}}(t)$, (final)"
+                    label_b = r"$\Delta b^{i_{max}}_{\lambda}(t)$, (final)"
             else:
                 iter_code = (iter_idx + 1) // 2
                 line_code = f"iter={iter_code}"
                 label_a = r"$\Delta a(t)$, " + line_code
-                label_b = r"$\Delta b(t)$, " + line_code
+                label_b = r"$\Delta b_{\lambda}(t)$, " + line_code
 
             ax.plot(t_values, a_diffs, label=label_a,
                     color="red", linestyle=linestyle)
             ax.plot(t_values, b_diffs, label=label_b,
                     color="blue", linestyle=linestyle)
 
-            ax.set_title("Solver Approx. vs. Unconstrained Equilibrium\n" +
+            ax.set_title("Solver Approximations vs. Equilibrium\n" +
                          "after i solver iterations.\n" +
-                         r"$\Delta a^i = a_{eq} - a^i$, $\Delta b^i = b_{eq} - b^i$")
+                         r"$\Delta a^i = a_{eq} - a^i$, $\Delta b^i_{\lambda} = b_{eq,{\lambda}} - b^i_{\lambda}$")
             ax.set_xlabel('t')
-            ax.set_ylabel('a(t), b(t) residuals vs. equilibrium')
+            ax.set_ylabel(r'$a(t), b_{\lambda}(t)$ residuals vs. equilibrium')
         ax.legend()
         ax.grid()
 
@@ -358,7 +308,8 @@ class State:
         b_res = [abs(i.b_cost - b_cost_theo) for i in iter_hist]
         # Plot the points as circles
         t_values = np.linspace(0, 1, N_PLOT_POINTS)
-        ax.scatter(a_res[1:-1], b_res[1:-1], color='darkblue', s=20, label=r'$|\Delta c^i_a|, |\Delta c^i_b|$', alpha=0.4)
+        ax.scatter(a_res[1:-1], b_res[1:-1], color='darkblue', s=20, label=r'$|\Delta c^i_a|, |\Delta c^i_b|$',
+                   alpha=0.4)
 
         # Connect the points with lines
         ax.plot(a_res, b_res, color='darkblue', linestyle='-', linewidth=1, alpha=0.4)
@@ -375,10 +326,9 @@ class State:
                 color='black', weight='bold')
 
         ax.set_xlabel(r'$|c(a^i)-c(a_{eq})|$')
-        ax.set_ylabel(r'$|c(b^i)-c(b_{eq})|$')
-        ax.set_title('Abs. Difference between Approximate\n and Non-Constraint Equilibrium Costs\n'
-                     r'$\Delta c^i_a =|c(a^i)-c(a_{eq})|$ vs. $\Delta c^i_b = |c(b^i)-c(b_{eq})|$'
-                     , fontsize=12)
+        ax.set_ylabel(r'$|c(b^i_{\lambda})-c(b_{eq,{\lambda}})|$')
+        ax.set_title('Absolute Diff. between Approx. and Equil. Costs\n'
+                     r'$\Delta c^i_a =|c(a^i)-c(a_{eq})|$ vs. $\Delta c^i_b = |c(b^i_{\lambda})-c(b_{eq,{\lambda}})|$')
         ax.legend()
 
     @staticmethod
@@ -390,12 +340,10 @@ class State:
 
     def plot_results(self, iter_hist: List["State"]) -> dict:
         fig, axs = plt.subplots(2, 2, figsize=(10, 10))
-        plt.suptitle("Two-Trader Constrained Equilibrium Strategies, " +
+        plt.suptitle("Two-Trader Equilibrium Strategies, " +
                      r"$\kappa$" + f"={KAPPA}, " + r"$\lambda$" + f"={LAMBD}\n" +
-                     f"No Overbuying: a(t) <= {CONS_OVERBUYING[0]}, b(t) <= {CONS_OVERBUYING[1]}; " +
-                     f"No Short-Selling\n" +
-                     f"{self.n} Fourier terms, {len(iter_hist) // 2} solver iterations\n",
-                     fontsize=16)
+                     f"{self.n} Fourier terms, " +
+                     f"{len(iter_hist) // 2} solver iterations", fontsize=16)
         stats = self.check_v_theo(LAMBD, KAPPA, axs[0, 0])
         print(f"\nAccuracy: L2(a) = {stats['L2_a']:.5f}, L2(b) = {stats['L2_b']:.5f}")
         self.plot_state_space(iter_hist, axs[1, 0])
@@ -410,8 +358,8 @@ def pickle_file_path(make_dirs: bool = False):
     # Define the directory and filename
     results_dir = os.path.join(CURRENT_DIR, cfg.SIM_RESULTS_DIR)
     # timestamp = datetime.now().strftime('%Y%m%d-%H%M')
-    filename = cfg.SIM_CONS_FILE_NAME.format(
-        LAMBD=LAMBD, KAPPA=KAPPA, N=N, CONSTRAINTS=CONS_SUFFIX)
+    filename = cfg.SIM_FILE_NAME.format(
+        LAMBD=LAMBD, KAPPA=KAPPA, N=N, SUFFIX=DATA_FILE_SUFFIX)
     file_path = os.path.join(results_dir, filename)
 
     # Create the directory if it does not exist
@@ -485,8 +433,7 @@ def main():
 
     # Save results
     if SAVE_RESULTS:
-        save_pickled_results({'state': state, 'iter_hist': iter_hist, 'stats': sim_stats,
-                             'constraints': {'overbuying': CONS_OVERBUYING, 'short_sell': CONS_SHORT_SELL}})
+        save_pickled_results({'state': state, 'iter_hist': iter_hist, 'stats': sim_stats})
 
 
 if __name__ == "__main__":

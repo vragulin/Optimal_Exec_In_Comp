@@ -1,6 +1,7 @@
 """ Generate a 2x5 plot using previously saved simulation results
     The program expects data for every scenario in a pickle file in the results directory.
     (locaton and file nae format specified in config.py)
+    In this version we iterate over Gamam (which is the FRACTION_MOVE in the optimizer)
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -18,13 +19,14 @@ import trading_funcs as tf
 import config as cfg
 
 # Global Parameters
-Params = namedtuple('Parameters', ['lambd', 'kappa', 'n'])
+Params = namedtuple('Parameters', ['lambd', 'kappa', 'n', 'gamma'])
 sim_runs_params = [
-    Params(5, 1, 20),
-    Params(10, 1, 20),
-    Params(2, 20, 30),
-    Params(1, 20, 30),
-    Params(1.5, 30, 40),
+    # lambd, kappa, n, gamma
+    Params(5, 20, 3, 0.2),
+    Params(5, 20, 5, 0.2),
+    Params(5, 20, 9, 0.2),
+    Params(5, 20, 15, 0.2),
+    Params(5, 20, 21, 0.2),
 ]
 # sim_runs_params = [
 #     Params(5, 1, 10),
@@ -192,7 +194,9 @@ def pickle_file_path(p: Params) -> str:
 
     # timestamp = datetime.now().strftime('%Y%m%d-%H%M')
     filename = cfg.SIM_FILE_NAME.format(
-        LAMBD=p.lambd, KAPPA=p.kappa, N=p.n, SUFFIX=DATA_FILE_SUFFIX)
+        LAMBD=p.lambd, KAPPA=p.kappa, N=p.n,
+        SUFFIX=DATA_FILE_SUFFIX.format(FRACTION_MOVE=p.gamma)
+    )
     file_path = os.path.join(results_dir, filename)
 
     return file_path
@@ -213,7 +217,7 @@ def fetch_one_sim_file(p: Params) -> dict:
 
 
 def plot_eq_and_approx_strats(results: dict, params: Params, ax: Any) -> dict:
-    lambd, kappa, n = params
+    lambd, kappa, n, frac_move = params
     state = results['state']
     n_iter = len(results['iter_hist']) // 2
     t_values = np.linspace(0, 1, cfg.N_PLOT_POINTS)
@@ -236,8 +240,8 @@ def plot_eq_and_approx_strats(results: dict, params: Params, ax: Any) -> dict:
         ax.plot(t_values, a_approx, label=r"$a^*(t)$", color="green", linestyle="-")
         ax.plot(t_values, b_approx, label=r"$b^*_{\lambda}(t)$", color="blue", linestyle="-")
         ax.set_title(r"$\kappa$" + f"={kappa}, " + r"$\lambda$" + f"={lambd}, " +
-                     f"N={state.n}\n" +
-                     f"({n_iter} iterations)\n" +
+                     f"N={state.n}, " + r"$\gamma$" + f"={frac_move}, " +
+                     f"\n({n_iter} iterations)\n" +
                      # r"$L_2(a_{eq}-a^*)=$" + f"{l2_a:.4f}," +
                      # r"$L_2(b_{eq}-b^*)=$" + f"{l2_b:.4f}",
                      r"$L_2(a_{diff})=$" + f"{l2_a:.4f}, " +
@@ -297,12 +301,12 @@ def main():
 
     # Plot results
     fig, axs = plt.subplots(2, 5, figsize=(20, 10))
-    plt.suptitle("Two-Trade Equilibrium Strategies -- Analytic Solutions vs. Fourier Approximation (top)\n "
-                 "State Space Diagram of Solver Convergence Path in Terms of A,B Trading Costs (bottom)",
+    plt.suptitle(r"Two-Trade Equilibrium Strategies -- Approximation Accuracy vs. Number of Fourier Terms (N)"
+                 "\nTop: Analytic Solutions vs. Fourier Approximation\n "
+                 "Bottom: State Space Diagram of Solver Convergence Path in Terms of A,B Trading Costs",
                  fontsize=16)
 
     for i, (params, results) in enumerate(zip(sim_runs_params, sim_results)):
-        lambd, kappa, n = params
         t = np.linspace(0, 1, 100)
         _ = plot_eq_and_approx_strats(results, params, axs[0, i])
         plot_state_space(results, params, axs[1, i])

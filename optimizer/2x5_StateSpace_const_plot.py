@@ -1,4 +1,5 @@
 """ Generate a 2x5 plot using previously saved simulation results
+    Adapted to handle simualations with constraints
     The program expects data for every scenario in a pickle file in the results directory.
     (locaton and file nae format specified in config.py)
 """
@@ -18,27 +19,22 @@ import trading_funcs as tf
 import config as cfg
 
 # Global Parameters
-Params = namedtuple('Parameters', ['lambd', 'kappa', 'n'])
+Params = namedtuple('Parameters', ['lambd', 'kappa', 'n', 'overbuy'])
 sim_runs_params = [
-    Params(5, 1, 20),
-    Params(10, 1, 20),
-    Params(2, 20, 30),
-    Params(1, 20, 30),
-    Params(1.5, 30, 40),
+    # lambda, kappa, n, overbuy
+    Params(1, 10, 20, 1.2),
+    Params(2, 10, 20, 1.2),
+    Params(5, 10, 20, 1.2),
+    # Params(7, 10, 20, 1.5),
+    Params(10, 10, 20, 1.5),
+    Params(20, 10, 20, 3),
 ]
-# sim_runs_params = [
-#     Params(5, 1, 10),
-#     Params(10, 1, 10),
-#     Params(2, 20, 10),
-#     Params(1, 20, 10),
-#     Params(1.5, 30, 10),
-# ]
 
 # Plot parameters
 LABEL_OFFSET_MULT = 0.09
 
 # Suffix to identify the relevant the data files
-DATA_FILE_SUFFIX = ""  # "" for unconstrained, "_cons" for constrained
+CONS_SUFFIX = "o{OVERBUY_A}"
 
 
 class State:
@@ -188,11 +184,12 @@ class State:
 
 def pickle_file_path(p: Params) -> str:
     # Define the directory and filename
+    lambd, kappa, n, overbuy = p
     results_dir = os.path.join(CURRENT_DIR, cfg.SIM_RESULTS_DIR)
 
     # timestamp = datetime.now().strftime('%Y%m%d-%H%M')
-    filename = cfg.SIM_FILE_NAME.format(
-        LAMBD=p.lambd, KAPPA=p.kappa, N=p.n, SUFFIX=DATA_FILE_SUFFIX)
+    filename = cfg.SIM_CONS_FILE_NAME.format(
+        LAMBD=lambd, KAPPA=kappa, N=n, CONSTRAINTS=CONS_SUFFIX.format(OVERBUY_A=overbuy))
     file_path = os.path.join(results_dir, filename)
 
     return file_path
@@ -203,20 +200,18 @@ def fetch_one_sim_file(p: Params) -> dict:
     :param p: Parameters tuple
     """
     file_path = pickle_file_path(p)
-    if os.path.exists(file_path):
-        with open(file_path, 'rb') as file:
-            data = pickle.load(file)
-    else:
-        print(f"File {file_path} not found")
+    with open(file_path, 'rb') as file:
+        data = pickle.load(file)
 
     return data
 
 
 def plot_eq_and_approx_strats(results: dict, params: Params, ax: Any) -> dict:
-    lambd, kappa, n = params
+    lambd, kappa, n, _ = params
     state = results['state']
     n_iter = len(results['iter_hist']) // 2
     t_values = np.linspace(0, 1, cfg.N_PLOT_POINTS)
+    a_cap, b_cap = results['constraints']['overbuying']
 
     a_theo = State.calculate_theoretical_values(t_values, kappa, lambd, trader_a=True)
     b_theo = State.calculate_theoretical_values(t_values, kappa, lambd, trader_a=False)
@@ -237,15 +232,12 @@ def plot_eq_and_approx_strats(results: dict, params: Params, ax: Any) -> dict:
         ax.plot(t_values, b_approx, label=r"$b^*_{\lambda}(t)$", color="blue", linestyle="-")
         ax.set_title(r"$\kappa$" + f"={kappa}, " + r"$\lambda$" + f"={lambd}, " +
                      f"N={state.n}\n" +
-                     f"({n_iter} iterations)\n" +
-                     # r"$L_2(a_{eq}-a^*)=$" + f"{l2_a:.4f}," +
-                     # r"$L_2(b_{eq}-b^*)=$" + f"{l2_b:.4f}",
-                     r"$L_2(a_{diff})=$" + f"{l2_a:.4f}, " +
-                     r"$L_2(b_{diff})=$" + f"{l2_b:.4f}",
+                     f"a(t)<={a_cap}, " + r"$b_{\lambda}(t)$" + f"<={b_cap}\n" +
+                     f"({n_iter} iterations)\n",
                      fontsize=12)
         ax.legend()
         ax.set_xlabel('t')
-        ax.set_ylabel(r'$a(t), b_{\lambda}(t)$')
+        ax.set_ylabel(r'a(t), $b_{\lambda}(t)$')
         ax.grid()
 
     return {
@@ -297,13 +289,12 @@ def main():
 
     # Plot results
     fig, axs = plt.subplots(2, 5, figsize=(20, 10))
-    plt.suptitle("Two-Trade Equilibrium Strategies -- Analytic Solutions vs. Fourier Approximation (top)\n "
-                 "State Space Diagram of Solver Convergence Path in Terms of A,B Trading Costs (bottom)",
+    plt.suptitle("Two-Trade Constrained Equilibrium Strategies with Overbuy and Short Selling Constraints\n" +
+                 "Top: Analytic Solutions vs.Fourier Approximation\n" +
+                 "Bottom: State Space Diagram of Solver Convergence Path in Terms of A,B Trading Costs",
                  fontsize=16)
 
     for i, (params, results) in enumerate(zip(sim_runs_params, sim_results)):
-        lambd, kappa, n = params
-        t = np.linspace(0, 1, 100)
         _ = plot_eq_and_approx_strats(results, params, axs[0, i])
         plot_state_space(results, params, axs[1, i])
 
