@@ -1,9 +1,18 @@
 # Optimal_Exec_In_Comp
-Optimal Execution/ Best Response / Two Trader Equilibrium analytics for the Chriss(2024) series of papers
+
+## Description
+This project aims to optimize execution strategies in competitive markets using advanced algorithms.
+
+The analytics cover 
+1) Optimal Execution
+2) Best Response (to an Adversary) Strategies
+3) Two Trader Equilibrium Strtegies.analytics for the Chriss(2024) series of papers
+
+The theoretical framework is based on the Chriss(2024) series of papers. The main papers are:
 
 
-1.  Optimal Position Building Strategies in Competition:  https://arxiv.org/pdf/2409.03586
-2.  Position-Building in Competition with Real-World Constraints: TBA
+*   Optimal Position Building Strategies in Competition:  https://arxiv.org/pdf/2409.03586
+*  Position-Building in Competition with Real-World Constraints: TBA
 
 
 ## Table of Contents
@@ -44,16 +53,19 @@ Optimal Execution/ Best Response / Two Trader Equilibrium analytics for the Chri
 
 ## Project Structure
 
-- `optimizer/2x5_StateSpace_const_plot.py`: Main script to generate 2x5 plots using saved simulation results.
-- `optimizer/2x5_StateSpace_plot_chg_N.py`: Script to generate plots comparing analytic solutions and Fourier approximations.
-- `cost_function/`: Directory containing cost function approximation scripts.
-- `fourier/`: Directory containing Fourier transformation scripts.
-- `trading_funcs/`: Directory containing trading-related functions.
-- `config.py`: Configuration file specifying locations and file name formats for results.
+- `optimizer/`: Main scripts used to solve trading strategy optimizations and generate plots for the Chriss(2024) papers.
+- `cost_function/`: Modules for calculating trading costs in competitive settings.
+- `fourier/`: Directory containing helper functions for approximating trading trajectories with Fourier and Sine Series.
+- `results/`: Directory containing simulation results.
+- `disc_sin_transform/`: Examples of using the discrete sine transform to approximate trading trajectories.
+- `solver_examples/`: Examples of using general-purpose and QP optimization solvers
+- `bvp_solver_examples/`: Examples of using the boundary value problem solver to approximate trading trajectories.
+- `Mathematica/`: Mathematica notebooks for testing sub-problems and testing the code.
+- `Representation/`: (Beta-version) code for encapsulation trading strategies in a class
+- `tests/`: Unit tests for the codebase (pytest).
 
 ## Contributing
-
-Contributions are welcome! Please open an issue or submit a pull request for any improvements or bug fixes.
+Contributions are welcome! Please open an issue or submit a pull request for any improvements or bug fixes to vlad@manifoldinsights.co.uk.
 
 ## License
 
