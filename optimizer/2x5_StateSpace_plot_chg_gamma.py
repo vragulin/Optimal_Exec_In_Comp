@@ -38,6 +38,8 @@ sim_runs_params = [
 
 # Plot parameters
 LABEL_OFFSET_MULT = 0.09
+INCLUDE_SUPTITLE = False
+TOL_SOLUTION = 1.0e8
 
 # Suffix to identify the relevant the data files
 DATA_FILE_SUFFIX = "_g{FRACTION_MOVE}"  # "" for unconstrained, "_cons" for constrained
@@ -236,7 +238,7 @@ def plot_eq_and_approx_strats(results: dict, params: Params, ax: Any) -> dict:
 
     if ax is not None:
         ax.scatter(t_values, a_theo, s=10, label=r"$a_{eq}(t)$", color="red")
-        ax.scatter(t_values, b_theo, s=10, label=r"$b_{eq,\lambda}(t)$", color="grey")
+        ax.scatter(t_values, b_theo, s=10, label=r"$b_{\lambda,eq}(t)$", color="grey")
         ax.plot(t_values, a_approx, label=r"$a^*(t)$", color="green", linestyle="-")
         ax.plot(t_values, b_approx, label=r"$b^*_{\lambda}(t)$", color="blue", linestyle="-")
         ax.set_title(r"$\kappa$" + f"={kappa}, " + r"$\lambda$" + f"={lambd}, " +
@@ -290,8 +292,12 @@ def plot_state_space(results: dict, params: Params, ax: Any) -> None:
 
     ax.set_xlabel('Trader A cost')
     ax.set_ylabel('Trader B cost')
-    ax.set_title(f'Trading Cost Convergence to Equilibrium\n'
-                 f'(x,y) = (cost A, cost B)')
+    if (abs(a_costs[-1]) <= TOL_SOLUTION) and (abs(b_costs[-1]) <= TOL_SOLUTION):
+        ax.set_title(f'Trading Cost Convergence to Equilibrium\n'
+                     f'(x,y) = (cost A, cost B)\n')
+    else:
+        ax.set_title(f'Iter. Moved Out of Bounds {TOL_SOLUTION:.0e}\n'
+                     f'(x,y) = (cost A, cost B)\n')
     ax.legend()
 
 
@@ -301,14 +307,14 @@ def main():
 
     # Plot results
     fig, axs = plt.subplots(2, 5, figsize=(20, 10))
-    plt.suptitle(r"Two-Trade Equilibrium Strategies -- Convergence Speed and Stability vs the Solver Adjustment "
-                 r"Speed, $\gamma$"
-                 "\nTop: Analytic Solutions vs. Fourier Approximation\n "
-                 "Bottom: State Space Diagram of Solver Convergence Path in Terms of A,B Trading Costs",
-                 fontsize=16)
+    if INCLUDE_SUPTITLE:
+        plt.suptitle(r"Two-Trade Equilibrium Strategies -- Convergence Speed and Stability vs the Solver Adjustment "
+                     r"Speed, $\gamma$"
+                     "\nTop: Analytic Solutions vs. Fourier Approximation\n "
+                     "Bottom: State Space Diagram of Solver Convergence Path in Terms of A,B Trading Costs",
+                     fontsize=16)
 
     for i, (params, results) in enumerate(zip(sim_runs_params, sim_results)):
-        t = np.linspace(0, 1, 100)
         _ = plot_eq_and_approx_strats(results, params, axs[0, i])
         plot_state_space(results, params, axs[1, i])
 

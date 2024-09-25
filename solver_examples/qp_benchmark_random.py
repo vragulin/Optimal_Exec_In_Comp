@@ -26,7 +26,7 @@ def solve_random_qp(n: int, solver: str, inp: dict = None) -> Any:
 
 
 if __name__ == "__main__":
-	solvers = ['cvxopt', 'daqp', 'piqp', 'quadprog']
+	solvers = ['cvxopt', 'daqp', 'piqp', 'quadprog']  #ToDo add osqp later
 	N = 500
 	np.random.seed(123)
 	inp = gen_random_inputs(N)

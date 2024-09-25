@@ -20,18 +20,20 @@ import cost_function_approx as ca
 import fourier as fr
 
 # Parameters and Constants
-LAMBD = 1
+LAMBD = 5
 KAPPA = 20
-N = 20
+N = 3
+FRACTION_MOVE = 0.5
+# FRACTION_MOVE = 0.8 if LAMBD > 5 else 0.2  # Fraction of the way to move towards the new solution (float e.g. 1.0)
 
 TOL_COEFFS = 1e-4
 TOL_COSTS = TOL_COEFFS
-FRACTION_MOVE = 0.8  # Fraction of the way to move towards the new solution, input as a float e.g. 1.0
 MAX_ITER = 100
 MAX_ABS_COST = 1e10
 N_PLOT_POINTS = 100
 N_ITER_LINES = 4
 LINE_STYLES = ['-', '--', '-.', ':', (0, (3, 1, 1, 1))]
+INCLUDE_SUPTITLE = False
 LABEL_OFFSET_MULT = 0.09
 DEFAULT_N = 15
 GAMMA = 1  # Put it at the end since it never changes
@@ -142,7 +144,7 @@ class State:
             b_coeff_new = result_x * FRACTION_MOVE + self.b_coeff * (1 - FRACTION_MOVE)
             return State(self.a_coeff, b_coeff_new, calc_costs=False)
 
-    def check_v_theo(self, lambd: float, kappa: float, ax: Any) -> Dict[str, Any]:
+    def check_v_theo(self, lambd: float, kappa: float, iter_hist, ax: Any) -> Dict[str, Any]:
         """Check the solution against theoretical values.
 
         :param lambd: Scale of trader B
@@ -161,11 +163,12 @@ class State:
         a_diff = np.array(a_theo) - np.array(a_approx)
         b_diff = np.array(b_theo) - np.array(b_approx)
 
-        l2_a = np.linalg.norm(a_diff, 2)/np.sqrt(len(a_diff))
-        l2_b = np.linalg.norm(b_diff, 2)/np.sqrt(len(b_diff))
+        l2_a = np.linalg.norm(a_diff, 2) / np.sqrt(len(a_diff))
+        l2_b = np.linalg.norm(b_diff, 2) / np.sqrt(len(b_diff))
 
         if ax is not None:
-            self._plot_values(ax, t_values, a_theo, b_theo, a_approx, b_approx, l2_a, l2_b)
+            self._plot_values(ax, t_values, a_theo, b_theo, a_approx, b_approx,
+                              l2_a, l2_b, iter_hist)
 
         return {
             "a_theo": a_theo,
@@ -182,12 +185,17 @@ class State:
         return [tf.equil_2trader(t, params) for t in t_values]
 
     @staticmethod
-    def _plot_values(ax, t_values, a_theo, b_theo, a_approx, b_approx, l2_a, l2_b):
+    def _plot_values(ax, t_values, a_theo, b_theo, a_approx, b_approx, l2_a, l2_b,
+                     iter_hist: List["State"]) -> None:
         ax.scatter(t_values, a_theo, s=10, label=r"$a_{eq}(t)$", color="red")
-        ax.scatter(t_values, b_theo, s=10, label=r"$b_{eq,{\lambda}}(t)$", color="grey")
+        ax.scatter(t_values, b_theo, s=10, label=r"$b_{{\lambda},eqf}(t)$", color="grey")
         ax.plot(t_values, a_approx, label=r"$a^*(t)$", color="green", linestyle="-")
         ax.plot(t_values, b_approx, label=r"$b^*_{\lambda}(t)$", color="blue", linestyle="-")
+        n_iter = len(iter_hist) // 2
         ax.set_title("Theoretical and approximated trading strategies\n" +
+                     r"$\kappa$" + f"={KAPPA}, " + r"$\lambda$" + f"={LAMBD}, N={N}, " +
+                     r'$\gamma=$' + f'{FRACTION_MOVE:.1f} :: ' +
+                     f'{n_iter} solver iterations\n' +
                      r"$L_2(a_{diff})=$" + f"{l2_a:.4f}, " +
                      r"$L_2(b_{diff})=$" + f"{l2_b:.4f}",
                      fontsize=12)
@@ -223,7 +231,9 @@ class State:
 
         ax.set_xlabel('Trader A cost')
         ax.set_ylabel('Trader B cost')
-        ax.set_title(f'Trading Cost Convergence to Equilibrium\n'
+
+        n_iter = len(iter_hist) // 2
+        ax.set_title(f'Trading Cost Convergence to Equilibrium\n' +
                      f'State Space Diagram: (x,y) = (cost A, cost B)')
         ax.legend()
 
@@ -266,7 +276,7 @@ class State:
 
             ax.set_title("Solver Approximations vs. Equilibrium\n" +
                          "after i solver iterations.\n" +
-                         r"$\Delta a^i = a_{eq} - a^i$, $\Delta b^i_{\lambda} = b_{eq,{\lambda}} - b^i_{\lambda}$")
+                         r"$\Delta a^i = a_{eq} - a^i$, $\Delta b^i_{\lambda} = b_{{\lambda},eq} - b^i_{\lambda}$")
             ax.set_xlabel('t')
             ax.set_ylabel(r'$a(t), b_{\lambda}(t)$ residuals vs. equilibrium')
         ax.legend()
@@ -326,9 +336,9 @@ class State:
                 color='black', weight='bold')
 
         ax.set_xlabel(r'$|c(a^i)-c(a_{eq})|$')
-        ax.set_ylabel(r'$|c(b^i_{\lambda})-c(b_{eq,{\lambda}})|$')
+        ax.set_ylabel(r'$|c(b^i_{\lambda})-c(b_{{\lambda},eq})|$')
         ax.set_title('Absolute Diff. between Approx. and Equil. Costs\n'
-                     r'$\Delta c^i_a =|c(a^i)-c(a_{eq})|$ vs. $\Delta c^i_b = |c(b^i_{\lambda})-c(b_{eq,{\lambda}})|$')
+                     r'$\Delta c^i_a =|c(a^i)-c(a_{eq})|$ vs. $\Delta c^i_b = |c(b^i_{\lambda})-c(b_{{\lambda},eq})|$')
         ax.legend()
 
     @staticmethod
@@ -340,11 +350,12 @@ class State:
 
     def plot_results(self, iter_hist: List["State"]) -> dict:
         fig, axs = plt.subplots(2, 2, figsize=(10, 10))
-        plt.suptitle("Two-Trader Equilibrium Strategies, " +
-                     r"$\kappa$" + f"={KAPPA}, " + r"$\lambda$" + f"={LAMBD}\n" +
-                     f"{self.n} Fourier terms, " +
-                     f"{len(iter_hist) // 2} solver iterations", fontsize=16)
-        stats = self.check_v_theo(LAMBD, KAPPA, axs[0, 0])
+        if INCLUDE_SUPTITLE:
+            plt.suptitle("Two-Trader Equilibrium Strategies, " +
+                         r"$\kappa$" + f"={KAPPA}, " + r"$\lambda$" + f"={LAMBD}\n" +
+                         f"{self.n} Fourier terms, " +
+                         f"{len(iter_hist) // 2} solver iterations", fontsize=16)
+        stats = self.check_v_theo(LAMBD, KAPPA, iter_hist, axs[0, 0])
         print(f"\nAccuracy: L2(a) = {stats['L2_a']:.5f}, L2(b) = {stats['L2_b']:.5f}")
         self.plot_state_space(iter_hist, axs[1, 0])
         self.plot_func_convergence(iter_hist, stats, axs[0, 1])
@@ -402,7 +413,7 @@ def main():
     converged_flag = False
 
     while True:
-        print("\nStarting iteration:")
+        print(f"\nStarting iteration: {len(iter_hist) // 2 + 1}")
         state_a = state.update(solve=TRADER_A)
         print("New state A:")
         print(str(state_a))

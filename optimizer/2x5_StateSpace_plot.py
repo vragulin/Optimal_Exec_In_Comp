@@ -18,27 +18,29 @@ import trading_funcs as tf
 import config as cfg
 
 # Global Parameters
-Params = namedtuple('Parameters', ['lambd', 'kappa', 'n'])
-sim_runs_params = [
-    Params(5, 1, 20),
-    Params(10, 1, 20),
-    Params(2, 20, 30),
-    Params(1, 20, 30),
-    Params(1.5, 30, 40),
-]
+Params = namedtuple('Parameters', ['lambd', 'kappa', 'n', 'gamma'])
 # sim_runs_params = [
-#     Params(5, 1, 10),
-#     Params(10, 1, 10),
-#     Params(2, 20, 10),
-#     Params(1, 20, 10),
-#     Params(1.5, 30, 10),
+#     # lambd, kappa, n, gamma
+#     Params(5, 1, 20, 0.8),
+#     Params(10, 1, 20, 0.8),
+#     Params(2, 20, 30, 0.2),
+#     Params(1, 20, 30, 0.2),
+#     Params(1.5, 30, 40, 0.2),
 # ]
-
+sim_runs_params = [
+    # lambd, kappa, n, gamma
+    Params(5, 1, 10, 0.8),
+    Params(10, 1, 10, 0.8),
+    Params(2, 20, 10, 0.2),
+    Params(1, 20, 10, 0.2),
+    Params(1.5, 30, 10, 0.2),
+]
 # Plot parameters
 LABEL_OFFSET_MULT = 0.09
+INCLUDE_SUPTITLE = False
 
 # Suffix to identify the relevant the data files
-DATA_FILE_SUFFIX = ""  # "" for unconstrained, "_cons" for constrained
+DATA_FILE_SUFFIX = "_g{FRACTION_MOVE}"  # "" for unconstrained, "_cons" for constrained
 
 
 class State:
@@ -192,7 +194,9 @@ def pickle_file_path(p: Params) -> str:
 
     # timestamp = datetime.now().strftime('%Y%m%d-%H%M')
     filename = cfg.SIM_FILE_NAME.format(
-        LAMBD=p.lambd, KAPPA=p.kappa, N=p.n, SUFFIX=DATA_FILE_SUFFIX)
+        LAMBD=p.lambd, KAPPA=p.kappa, N=p.n,
+        SUFFIX=DATA_FILE_SUFFIX.format(FRACTION_MOVE=p.gamma)
+    )
     file_path = os.path.join(results_dir, filename)
 
     return file_path
@@ -213,7 +217,7 @@ def fetch_one_sim_file(p: Params) -> dict:
 
 
 def plot_eq_and_approx_strats(results: dict, params: Params, ax: Any) -> dict:
-    lambd, kappa, n = params
+    lambd, kappa, n, frac_move = params
     state = results['state']
     n_iter = len(results['iter_hist']) // 2
     t_values = np.linspace(0, 1, cfg.N_PLOT_POINTS)
@@ -232,11 +236,11 @@ def plot_eq_and_approx_strats(results: dict, params: Params, ax: Any) -> dict:
 
     if ax is not None:
         ax.scatter(t_values, a_theo, s=10, label=r"$a_{eq}(t)$", color="red")
-        ax.scatter(t_values, b_theo, s=10, label=r"$b_{eq,\lambda}(t)$", color="grey")
+        ax.scatter(t_values, b_theo, s=10, label=r"$b_{\lambda,eq}(t)$", color="grey")
         ax.plot(t_values, a_approx, label=r"$a^*(t)$", color="green", linestyle="-")
         ax.plot(t_values, b_approx, label=r"$b^*_{\lambda}(t)$", color="blue", linestyle="-")
         ax.set_title(r"$\kappa$" + f"={kappa}, " + r"$\lambda$" + f"={lambd}, " +
-                     f"N={state.n}\n" +
+                     f"N={state.n}, " + r"$\gamma$" + f"={frac_move:.1f}\n" +
                      f"({n_iter} iterations)\n" +
                      # r"$L_2(a_{eq}-a^*)=$" + f"{l2_a:.4f}," +
                      # r"$L_2(b_{eq}-b^*)=$" + f"{l2_b:.4f}",
@@ -297,12 +301,13 @@ def main():
 
     # Plot results
     fig, axs = plt.subplots(2, 5, figsize=(20, 10))
-    plt.suptitle("Two-Trade Equilibrium Strategies -- Analytic Solutions vs. Fourier Approximation (top)\n "
-                 "State Space Diagram of Solver Convergence Path in Terms of A,B Trading Costs (bottom)",
-                 fontsize=16)
+    if INCLUDE_SUPTITLE:
+        plt.suptitle("Two-Trade Equilibrium Strategies -- Analytic Solutions vs. Fourier Approximation (top)\n "
+                     "State Space Diagram of Solver Convergence Path in Terms of A,B Trading Costs (bottom)",
+                     fontsize=16)
 
     for i, (params, results) in enumerate(zip(sim_runs_params, sim_results)):
-        lambd, kappa, n = params
+        lambd, kappa, n, frac_move = params
         t = np.linspace(0, 1, 100)
         _ = plot_eq_and_approx_strats(results, params, axs[0, i])
         plot_state_space(results, params, axs[1, i])

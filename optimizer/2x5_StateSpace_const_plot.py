@@ -32,9 +32,11 @@ sim_runs_params = [
 
 # Plot parameters
 LABEL_OFFSET_MULT = 0.09
+INCLUDE_SUPTITLE = False
+FRACTION_MOVE = 0.5
 
 # Suffix to identify the relevant the data files
-CONS_SUFFIX = "o{OVERBUY_A}"
+CONS_SUFFIX = "g{FRACTION_MOVE}_o{OVERBUY_A}"
 
 
 class State:
@@ -189,7 +191,9 @@ def pickle_file_path(p: Params) -> str:
 
     # timestamp = datetime.now().strftime('%Y%m%d-%H%M')
     filename = cfg.SIM_CONS_FILE_NAME.format(
-        LAMBD=lambd, KAPPA=kappa, N=n, CONSTRAINTS=CONS_SUFFIX.format(OVERBUY_A=overbuy))
+        LAMBD=lambd, KAPPA=kappa, N=n,
+        CONSTRAINTS=CONS_SUFFIX.format(
+            OVERBUY_A=overbuy, FRACTION_MOVE=FRACTION_MOVE))
     file_path = os.path.join(results_dir, filename)
 
     return file_path
@@ -227,11 +231,11 @@ def plot_eq_and_approx_strats(results: dict, params: Params, ax: Any) -> dict:
 
     if ax is not None:
         ax.scatter(t_values, a_theo, s=10, label=r"$a_{eq}(t)$", color="red")
-        ax.scatter(t_values, b_theo, s=10, label=r"$b_{eq,\lambda}(t)$", color="grey")
+        ax.scatter(t_values, b_theo, s=10, label=r"$b_{\lambda,eq}(t)$", color="grey")
         ax.plot(t_values, a_approx, label=r"$a^*(t)$", color="green", linestyle="-")
         ax.plot(t_values, b_approx, label=r"$b^*_{\lambda}(t)$", color="blue", linestyle="-")
         ax.set_title(r"$\kappa$" + f"={kappa}, " + r"$\lambda$" + f"={lambd}, " +
-                     f"N={state.n}\n" +
+                     f"N={state.n}, " + r'$\gamma$' + f"={FRACTION_MOVE}\n" +
                      f"a(t)<={a_cap}, " + r"$b_{\lambda}(t)$" + f"<={b_cap}\n" +
                      f"({n_iter} iterations)\n",
                      fontsize=12)
@@ -289,10 +293,11 @@ def main():
 
     # Plot results
     fig, axs = plt.subplots(2, 5, figsize=(20, 10))
-    plt.suptitle("Two-Trade Constrained Equilibrium Strategies with Overbuy and Short Selling Constraints\n" +
-                 "Top: Analytic Solutions vs.Fourier Approximation\n" +
-                 "Bottom: State Space Diagram of Solver Convergence Path in Terms of A,B Trading Costs",
-                 fontsize=16)
+    if INCLUDE_SUPTITLE:
+        plt.suptitle("Two-Trade Constrained Equilibrium Strategies with Overbuy and Short Selling Constraints\n" +
+                     "Top: Analytic Solutions vs.Fourier Approximation\n" +
+                     "Bottom: State Space Diagram of Solver Convergence Path in Terms of A,B Trading Costs",
+                     fontsize=16)
 
     for i, (params, results) in enumerate(zip(sim_runs_params, sim_results)):
         _ = plot_eq_and_approx_strats(results, params, axs[0, i])

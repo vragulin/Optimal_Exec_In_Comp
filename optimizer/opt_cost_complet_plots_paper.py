@@ -33,6 +33,7 @@ T_SAMPLE_PER_SEMI_WAVE = 3  # number of points to sample constraints
 N_PLOT_POINTS = 100  # number of points for plotting
 RED_COLORS = ["darkred", "firebrick", "crimson", "indianred", "tomato"]
 LINE_STYLES = ['-', '--', '-.', ':', (0, (3, 1, 1, 1))]
+INCLUDE_SUPTITLE = False
 
 # Parameters for the b(t) function
 RISK_NEUTRAL, RISK_AVERSE, EAGER, PARABOLIC = range(4)
@@ -83,7 +84,7 @@ def plot_one_cell(opt_coeffs_frame: np.ndarray, ax: Any, params: dict) -> None:
 
     if B_INV_TYPE != RISK_NEUTRAL:
         ax.plot(t_values, t_values, color="black", linestyle="dashed")
-    ax.plot(t_values, b_curve, label="b(t)", color="blue")
+    ax.plot(t_values, b_curve, label=r"$b_\lambda(t)$", color="blue")
 
     # Fill the vertical range between t_star and 1 with grey
     # ax.fill_between(t_values, 0, 1, where=(t_values >= t_star), color='grey', alpha=0.2)
@@ -92,7 +93,7 @@ def plot_one_cell(opt_coeffs_frame: np.ndarray, ax: Any, params: dict) -> None:
     ax.set_title(f'λ={lambd}, ' + r'$t^*$' + f'={t_star}')
     ax.legend()  # prop={'size': 6})
     ax.set_xlabel('t')
-    ax.set_ylabel('a(t), b(t)')
+    ax.set_ylabel(r'$a(t), b_\lambda(t)$')
     ax.grid()
 
 
@@ -118,7 +119,8 @@ if __name__ == "__main__":
     # Minimize the cost function
 
     fig, axs = plt.subplots(len(t_star_list), len(lambd_list), figsize=(16, 16))
-    plt.suptitle(make_plot_suptitle(), fontsize=16)
+    if INCLUDE_SUPTITLE:
+        plt.suptitle(make_plot_suptitle(), fontsize=16)
 
     # Set up an array to keep answers for different value of rho
     a_coeffs_frame = np.zeros((len(c_list), N))

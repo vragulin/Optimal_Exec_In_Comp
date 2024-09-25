@@ -156,6 +156,53 @@ def cost_fn_a_approx(a_n, b_n, kappa, lambd, verbose=False):
 	return total_loss
 
 
+def cost_fn_a_approx_simplified(a_n, b_n, kappa, lambd, verbose=False):
+	"""
+		This computes the cost function of trader A from the formula in the
+		real-world constraints paper.
+		This approach avoids computing integrals.
+
+		:param a_n: Coefficients a_n for n from 1 to N
+		:param b_n: Coefficients b_n for n from 1 to N
+		:param kappa: Constant κ (kappa) - permanent market impact
+		:param lambd: Constant λ (lambda) - temporary market impact
+
+		:return: The computed value of the expression I
+		"""
+	# Ensure input sequences are numpy arrays
+	a_n = np.array(a_n, dtype=np.float64)
+	b_n = np.array(b_n, dtype=np.float64)
+	n_coeffs = len(a_n)
+
+	if len(b_n) != n_coeffs:
+		raise ValueError("Sequences a_n and b_n must be of the same length.")
+
+	pi = np.pi
+	n = np.arange(1, n_coeffs + 1)
+
+	# Calculate individual terms
+	t1 = (2 + kappa) * (1 + lambd) / 2
+
+	t2 = pi ** 2 / 2 * sum(i ** 2 * (a_n[i - 1] ** 2 + lambd * a_n[i - 1] * b_n[i - 1]) for i in n)
+
+	t3 = 2 * kappa * lambd / pi * sum((b_n[i - 1] - a_n[i - 1]) / i for i in n if i % 2 == 1)
+
+	t4 = 2 * kappa * sum((lambd * b_n[i - 1]) * a_n[j - 1] * i * j / (i * i - j * j)
+	                     for i in n for j in n if (i + j) % 2 == 1)
+
+	total_loss = t1 + t2 + t3 + t4
+	if verbose:
+		print("APPROX TOTAL COST FUNCTION FROM APPROX FORMULA:")
+		print("int_I: ", t1)
+		print("int_II: ", t2)
+		print("int_III: ", t3)
+		print("int_IV: ", t4)
+
+		print("Loss function approximation formula: ", total_loss)
+
+	return total_loss
+
+
 def cost_fn_b_approx(a_n, b_n, kappa, lambd, verbose=False):
 	"""
 		This computes the cost function of trader B from the formula in the
@@ -293,7 +340,7 @@ def fourier_integral_cost_fn(a_coeffs, b_coeffs, kappa, lambd):
 
 	Integral components:
 
-	Int_IV: \int_0^1
+	Int_IV: \\$int_0^1$
 
 	Purpose:
 

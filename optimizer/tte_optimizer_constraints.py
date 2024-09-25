@@ -26,10 +26,11 @@ LAMBD = 20
 KAPPA = 10
 N = 20
 OVERBUY = 3
+FRACTION_MOVE = 0.5
 
 TOL_COEFFS = 1e-4
 TOL_COSTS = TOL_COEFFS
-FRACTION_MOVE = 0.5
+# FRACTION_MOVE = 0.8 if LAMBD > 5 else 0.5  # Fraction of the way to move towards the new solution (float e.g. 1.0)
 MAX_ITER = 100
 MAX_ABS_COST = 1e10
 N_PLOT_POINTS = 100
@@ -49,7 +50,7 @@ T_SAMPLE_PER_SEMI_WAVE = 3  # number of points to sample constraints
 
 # Parameters to save simulation results
 SAVE_RESULTS = True
-CONS_SUFFIX = f"o{CONS_OVERBUYING[0]}"
+CONS_SUFFIX = f"g{FRACTION_MOVE}_o{CONS_OVERBUYING[0]}"
 
 # Global variables
 t_sample = None  # Points at whcih we sample the inequalities
@@ -391,7 +392,8 @@ class State:
     def plot_results(self, iter_hist: List["State"]) -> dict:
         fig, axs = plt.subplots(2, 2, figsize=(10, 10))
         plt.suptitle("Two-Trader Constrained Equilibrium Strategies, " +
-                     r"$\kappa$" + f"={KAPPA}, " + r"$\lambda$" + f"={LAMBD}\n" +
+                     r"$\kappa$" + f"={KAPPA}, " + r"$\lambda$" + f"={LAMBD}, "
+                     + r"$\gamma$" + f"={FRACTION_MOVE}\n" +
                      f"No Overbuying: a(t) <= {CONS_OVERBUYING[0]}, b(t) <= {CONS_OVERBUYING[1]}; " +
                      f"No Short-Selling\n" +
                      f"{self.n} Fourier terms, {len(iter_hist) // 2} solver iterations\n",
@@ -454,7 +456,7 @@ def main():
     converged_flag = False
 
     while True:
-        print("\nStarting iteration:")
+        print(f"\nStarting iteration: {len(iter_hist) // 2 + 1}")
         state_a = state.update(solve=TRADER_A)
         print("New state A:")
         print(str(state_a))

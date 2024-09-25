@@ -22,11 +22,11 @@ import config as cfg
 Params = namedtuple('Parameters', ['lambd', 'kappa', 'n', 'gamma'])
 sim_runs_params = [
     # lambd, kappa, n, gamma
-    Params(5, 20, 3, 0.2),
-    Params(5, 20, 5, 0.2),
-    Params(5, 20, 9, 0.2),
-    Params(5, 20, 15, 0.2),
-    Params(5, 20, 21, 0.2),
+    Params(5, 20, 3, 0.5),
+    Params(5, 20, 5, 0.5),
+    Params(5, 20, 9, 0.5),
+    Params(5, 20, 15, 0.5),
+    Params(5, 20, 21, 0.5),
 ]
 # sim_runs_params = [
 #     Params(5, 1, 10),
@@ -38,9 +38,11 @@ sim_runs_params = [
 
 # Plot parameters
 LABEL_OFFSET_MULT = 0.09
+INCLUDE_SUPTITLE = False
+
 
 # Suffix to identify the relevant the data files
-DATA_FILE_SUFFIX = ""  # "" for unconstrained, "_cons" for constrained
+DATA_FILE_SUFFIX = "_g{FRACTION_MOVE}"  # "" for unconstrained, "_cons" for constrained
 
 
 class State:
@@ -301,10 +303,11 @@ def main():
 
     # Plot results
     fig, axs = plt.subplots(2, 5, figsize=(20, 10))
-    plt.suptitle(r"Two-Trade Equilibrium Strategies -- Approximation Accuracy vs. Number of Fourier Terms (N)"
-                 "\nTop: Analytic Solutions vs. Fourier Approximation\n "
-                 "Bottom: State Space Diagram of Solver Convergence Path in Terms of A,B Trading Costs",
-                 fontsize=16)
+    if INCLUDE_SUPTITLE:
+        plt.suptitle(r"Two-Trade Equilibrium Strategies -- Approximation Accuracy vs. Number of Fourier Terms (N)"
+                     "\nTop: Analytic Solutions vs. Fourier Approximation\n "
+                     "Bottom: State Space Diagram of Solver Convergence Path in Terms of A,B Trading Costs",
+                     fontsize=16)
 
     for i, (params, results) in enumerate(zip(sim_runs_params, sim_results)):
         t = np.linspace(0, 1, 100)
