@@ -20,22 +20,22 @@ import config as cfg
 
 # Global Parameters
 Params = namedtuple('Parameters', ['lambd', 'kappa', 'n', 'gamma'])
+# sim_runs_params = [
+#     # lambd, kappa, n, gamma
+#     Params(1, 20, 20, 0.2),
+#     Params(1, 20, 20, 0.4),
+#     Params(1, 20, 20, 0.6),
+#     Params(1, 20, 20, 0.8),
+#     Params(1, 20, 20, 1.0),
+# ]
 sim_runs_params = [
     # lambd, kappa, n, gamma
-    Params(1, 20, 20, 0.2),
-    Params(1, 20, 20, 0.4),
-    Params(1, 20, 20, 0.6),
-    Params(1, 20, 20, 0.8),
-    Params(1, 20, 20, 1.0),
-]
-# sim_runs_params = [
-#     Params(5, 1, 10),
-#     Params(10, 1, 10),
-#     Params(2, 20, 10),
-#     Params(1, 20, 10),
-#     Params(1.5, 30, 10),
-# ]
-
+    Params(1, 5, 20, 0.2),
+    Params(1, 5, 20, 0.4),
+    Params(1, 5, 20, 0.6),
+    Params(1, 5, 20, 0.8),
+    Params(1, 5, 20, 1.0),
+    ]
 # Plot parameters
 LABEL_OFFSET_MULT = 0.09
 INCLUDE_SUPTITLE = False

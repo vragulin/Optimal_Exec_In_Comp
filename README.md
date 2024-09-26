@@ -11,7 +11,7 @@ The analytics cover
 The theoretical framework is based on the Chriss(2024) series of papers. The main papers are:
 
 *  Optimal Position Building Strategies in Competition:  https://arxiv.org/pdf/2409.03586
-*  Position-Building in Competition with Real-World Constraints: TBA
+*  Position-Building in Competition with Real-World Constraints: https://arxiv.org/abs/2409.15459
 
 
 ## Table of Contents

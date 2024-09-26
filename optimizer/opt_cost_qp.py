@@ -2,6 +2,8 @@
 Miminize cost function given b
 A version of opt_cost.py that uses a specialized QP solver.
 """
+# ToDo: This is work in progress.  The code is not complete.
+
 import numpy as np
 from numpy.linalg import norm
 from scipy.integrate import quad

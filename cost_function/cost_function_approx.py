@@ -1,6 +1,8 @@
 """
 Approximation of the cost function without integrals by using Fourier approximations for a(t), b(t)
 """
+# ToDo - add a simplified version of the cost functions for A and B
+#   (withoun the a_n a_m in the 4th term of the integral).
 import numpy as np
 import fourier as fr
 from scipy.integrate import quad
@@ -8,108 +10,7 @@ from functools import reduce
 from itertools import product
 
 
-# integral of cos(n pi t) sin(n pi t) in closed form
-def int_cos_sin_old(n, m):
-	pi = np.pi
-	if n != m:
-		int_chk = (m - m * np.cos(m * pi) * np.cos(n * pi) - m * np.sin(m * pi) * np.sin(n * pi)) / (
-				pi * (m ** 2 - n ** 2))
-	else:
-		int_chk = 0
-
-	return int_chk
-
-
-def int_cos_sin(n, m):
-	pi = np.pi
-	if n == m:
-		ans = 0
-	else:
-		ans = (m - m * (-1) ** (m + n)) / (pi * (m ** 2 - n ** 2))
-
-	return ans
-
-
-def cost_fn_a_approx_old(a_n: np.ndarray, b_n: np.ndarray,
-                     kappa: float, lambd: float, verbose=False):
-	"""
-	This computes the cost function of trader A from the formula in the
-	real-world constraints paper.
-	This approach avoids computing integrals.
-
-	:param a_n: Coefficients a_n for n from 1 to N
-	:param b_n: Coefficients b_n for n from 1 to N
-	:param kappa: Constant κ (kappa) - permanent market impact
-	:param lambd: Constant λ (lambda) - temporary market impact
-
-	:return: The computed value of the expression I
-	"""
-	# Ensure input sequences are numpy arrays
-	a_n = np.array(a_n, dtype=np.float64)
-	b_n = np.array(b_n, dtype=np.float64)
-	N = len(a_n)
-
-	if len(b_n) != N:
-		raise ValueError("Sequences a_n and b_n must be of the same length.")
-
-	n = np.arange(1, N + 1)  # n from 1 to N
-
-	# Compute the third term: kappa * [ (1 + lambd) / 2 + sum_{n odd} (2 * (b_n - a_n)) / (n * π) ]
-	odd_indices = np.where(n % 2 == 1)[0]  # Indices where n is odd
-	n_odd = n[odd_indices]
-	a_n_odd = a_n[odd_indices]
-	b_n_odd = b_n[odd_indices]
-	pi = np.pi
-
-	# I: \int_0^1 \dot{a} \dot{a} dt
-	int_I = 1 + 0.5 * np.sum(n ** 2 * pi ** 2 * a_n ** 2)
-
-	# II: \int_0^1 lambda \dot{b} \dot{a} dt
-	int_II = lambd + (lambd / 2) * np.sum(n ** 2 * pi ** 2 * a_n * b_n)
-
-	# III: \int_0^1 kappa \dot{a} a dt
-	int_III = kappa / 2
-
-	# Replaced the double loop with a faster version below
-	# ans = 0
-	# for n, a_co in enumerate(a_n, start=1):
-	# 	for m, b_co in enumerate(b_n, start=1):
-	# 		ans += a_co * b_co * n * pi * int_cos_sin(n, m)
-
-	ans = reduce(
-		lambda acc, x: acc + x[0] * x[1] * x[2] * pi * int_cos_sin(x[2], x[3]),
-		((a_co, b_co, n, m) for n, a_co in enumerate(a_n, start=1) for m, b_co in enumerate(b_n, start=1)),
-		0
-	)
-
-	iv4 = kappa * lambd * ans
-
-	int_IV_1 = kappa * lambd * 0.5
-	int_IV_2 = ((2 * lambd * kappa) / pi) * np.sum(b_n_odd / n_odd)
-	int_IV_3 = -((2 * lambd * kappa) / pi) * np.sum(a_n_odd / n_odd)
-	int_IV_4 = iv4
-
-	int_IV = int_IV_1 + int_IV_2 + int_IV_3 + int_IV_4
-	integral = int_I + int_II + int_III + int_IV
-
-	if verbose:
-		print("APPROX TOTAL COST FUNCTION FROM APPROX FORMULA:")
-		print("int_I: ", int_I)
-		print("int_II: ", int_II)
-		print("int_III: ", int_III)
-		print("int_IV: ", int_IV)
-		print("\tint_0^1 lambda kappa t dt: ", int_IV_1)
-		print("\tint_0^1 lambda kappa (b(t)-t) dt: ", int_IV_2)
-		print("\tint_0^1 lambda kappa t * (a'(t)-1) dt: ", int_IV_3)
-		print("\tint_0^1 lambda kappa (b(t) - 1)*(a'(t) - 1) dt: ", int_IV_4)
-		print("\tTotal of components: ", int_IV_1 + int_IV_2 + int_IV_3 + int_IV_4)
-
-		print("Loss function approximation formula: ", integral)
-
-	return int_I + int_II + int_III + int_IV
-
-
-def cost_fn_a_approx(a_n, b_n, kappa, lambd, verbose=False):
+def cost_fn_a_approx_old(a_n, b_n, kappa, lambd, verbose=False):
 	"""
 		This computes the cost function of trader A from the formula in the
 		real-world constraints paper.
@@ -156,7 +57,7 @@ def cost_fn_a_approx(a_n, b_n, kappa, lambd, verbose=False):
 	return total_loss
 
 
-def cost_fn_a_approx_simplified(a_n, b_n, kappa, lambd, verbose=False):
+def cost_fn_a_approx(a_n, b_n, kappa, lambd, verbose=False):
 	"""
 		This computes the cost function of trader A from the formula in the
 		real-world constraints paper.
@@ -187,10 +88,57 @@ def cost_fn_a_approx_simplified(a_n, b_n, kappa, lambd, verbose=False):
 
 	t3 = 2 * kappa * lambd / pi * sum((b_n[i - 1] - a_n[i - 1]) / i for i in n if i % 2 == 1)
 
-	t4 = 2 * kappa * sum((lambd * b_n[i - 1]) * a_n[j - 1] * i * j / (i * i - j * j)
+	t4 = 2 * kappa * sum(lambd * b_n[i - 1] * a_n[j - 1] * i * j / (i * i - j * j)
 	                     for i in n for j in n if (i + j) % 2 == 1)
 
 	total_loss = t1 + t2 + t3 + t4
+	if verbose:
+		print("APPROX TOTAL COST FUNCTION FROM APPROX FORMULA:")
+		print("int_I: ", t1)
+		print("int_II: ", t2)
+		print("int_III: ", t3)
+		print("int_IV: ", t4)
+
+		print("Loss function approximation formula: ", total_loss)
+
+	return total_loss
+
+
+def cost_fn_b_approx_old(a_n, b_n, kappa, lambd, verbose=False):
+	"""
+		This computes the cost function of trader B from the formula in the
+		real-world constraints paper.
+		This approach avoids computing integrals.
+
+		:param a_n: Coefficients a_n for n from 1 to N
+		:param b_n: Coefficients b_n for n from 1 to N
+		:param kappa: Constant κ (kappa) - permanent market impact
+		:param lambd: Constant λ (lambda) - temporary market impact
+
+		:return: The computed value of the expression I
+		"""
+	# Ensure input sequences are numpy arrays
+	a_n = np.array(a_n, dtype=np.float64)
+	b_n = np.array(b_n, dtype=np.float64)
+	n_coeffs = len(a_n)
+
+	if len(b_n) != n_coeffs:
+		raise ValueError("Sequences a_n and b_n must be of the same length.")
+
+	pi = np.pi
+	n = np.arange(1, n_coeffs + 1)
+
+	# Calculate individual terms
+	t1 = (2 + kappa) * (1 + lambd) / 2
+
+	t2 = pi ** 2 / 2 * sum(i ** 2 * (a_n[i - 1] * b_n[i - 1] + lambd * b_n[i - 1] ** 2) for i in n)
+
+	t3 = 2 * kappa / pi * sum((a_n[i - 1] - b_n[i - 1]) / i for i in n if i % 2 == 1)
+
+	t4 = 2 * kappa * sum((a_n[i - 1] + lambd * b_n[i - 1]) * b_n[j - 1] * i * j / (i * i - j * j)
+	                     for i in n for j in n if (i + j) % 2 == 1)
+
+	total_loss = lambd * (t1 + t2 + t3 + t4)
 	if verbose:
 		print("APPROX TOTAL COST FUNCTION FROM APPROX FORMULA:")
 		print("int_I: ", t1)
@@ -234,7 +182,7 @@ def cost_fn_b_approx(a_n, b_n, kappa, lambd, verbose=False):
 
 	t3 = 2 * kappa / pi * sum((a_n[i - 1] - b_n[i - 1]) / i for i in n if i % 2 == 1)
 
-	t4 = 2 * kappa * sum((a_n[i - 1] + lambd * b_n[i - 1]) * b_n[j - 1] * i * j / (i * i - j * j)
+	t4 = 2 * kappa * sum(a_n[i - 1]  * b_n[j - 1] * i * j / (i * i - j * j)
 	                     for i in n for j in n if (i + j) % 2 == 1)
 
 	total_loss = lambd * (t1 + t2 + t3 + t4)

@@ -21,9 +21,9 @@ import fourier as fr
 
 # Parameters and Constants
 LAMBD = 5
-KAPPA = 20
-N = 3
-FRACTION_MOVE = 0.5
+KAPPA = 1
+N = 20
+FRACTION_MOVE = 0.2
 # FRACTION_MOVE = 0.8 if LAMBD > 5 else 0.2  # Fraction of the way to move towards the new solution (float e.g. 1.0)
 
 TOL_COEFFS = 1e-4
