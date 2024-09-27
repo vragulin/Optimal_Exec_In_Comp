@@ -1,6 +1,8 @@
 """ Minimize the cost function using the qpsolvers package.
     This test version only optimizes for Trader A
     V. Ragulin, 24-Sep-2024
+    This is a draft version of the code - before refactoring.
+    Use the refactored version.
 """
 import os
 import sys
@@ -18,22 +20,22 @@ from sampling import sample_sine_wave
 import fourier as fr
 
 # *** Global Parameters ***
-ABS_TOL = 1e-4
-N = 20
+# ABS_TOL = 1e-4
+# N = 35
 T_SAMPLE_PER_SEMI_WAVE = 3
-
-# Constraints
-CONS_OVERBUYING = None  # 1
-CONS_SHORTSELLING = None  # -0.5
-
-# Parameters used to set up a test case
-DECAY = 0.15
-DO_QP = True
-DO_SCI = True
+#
+# # Constraints
+# CONS_OVERBUYING = None  # 1
+# CONS_SHORTSELLING = None  # -0.5
+#
+# # Parameters used to set up a test case
+# DECAY = 0.1
+# DO_QP = True
+# DO_SCI = True
 TEST_EXACT_COEFF = False
-N_POINTS_PLOT = 100
+TEST_CONSTRAINTS = False
 np.random.seed(12)
-
+#
 t_sample = None
 
 
@@ -183,113 +185,121 @@ def minimize_cons_scipy(b_n: np.ndarray, kappa: float, lambd: float,
     return result.x, result
 
 
-def plot_strategies(a_qp: np.array, a_sci: np.ndarray, b: np.ndarray, cons: dict):
-    """ Plot optimal strategies for A and B"""
-    t_plot = np.linspace(0, 1, N_POINTS_PLOT)
+def check_constraints(coeff, cons, t_sample, ABS_TOL):
+    def val_func(t):
+        return fr.reconstruct_from_sin(t, coeff) + t
 
-    a_qp_vals = [fr.reconstruct_from_sin(t, a_qp) + t for t in t_plot]
-    a_sci_vals = [fr.reconstruct_from_sin(t, a_sci) + t for t in t_plot]
-    b_vals = [fr.reconstruct_from_sin(t, b) + t for t in t_plot]
-    plt.plot(t_plot, a_qp_vals, label="a_qp(t)", color="red", alpha=0.6)
-    plt.scatter(t_plot, a_sci_vals, s=10, label="a_sci(t)", color="crimson", alpha=0.6)
-    plt.plot(t_plot, b_vals, color="blue", label="b(t)", linestyle="dashed")
-    plt.plot(t_plot, np.ones(N_POINTS_PLOT) * cons['overbuying'], color="grey", label="overbuy cons.", alpha=0.6)
-    plt.plot(t_plot, np.ones(N_POINTS_PLOT) * cons['short_selling'], color="grey", label="short cons", alpha=0.6)
-    plt.title(f"Optimal response for A given B\nN terms = {len(b)}")
-    # plt.grid()
+    vals = np.array([val_func(t) for t in t_sample])
+
+    # Overbuying constraint
+    if (ubound := cons.get('overbuying', None)) is not None:
+        cons_ubound = ubound - vals
+    else:
+        cons_ubound = None
+
+    # Short Selling constraint
+    if (lbound := cons.get('short_selling', None)) is not None:
+        cons_lbound = vals - lbound
+    else:
+        cons_lbound = None
+
+    res = [x for x in [cons_ubound, cons_lbound] if x is not None]
+    if len(res) > 0:
+        return np.all(np.concatenate(res) >= -ABS_TOL)
+    else:
+        return True
+
+
+def run_optimization(N, DECAY, kappa, lambd, cons, ABS_TOL, DO_QP, DO_SCI):
+    a_n = np.zeros(N)
+    b_n = np.random.rand(N) * np.exp(-DECAY * np.arange(N))
+
+    t_sample = sample_sine_wave(list(range(1, N + 1)), T_SAMPLE_PER_SEMI_WAVE)
+
+    qp_time, sci_time = None, None
+
+    if DO_QP:
+        start_time_qp = time.time()
+        time.sleep(0.0001)  # To avoid pecision issues for small N, where the time is too short to measure
+        a_n_opt_qp, _ = minimize_cons_qpsolvers(b_n, kappa, lambd, cons=cons, abs_tol=ABS_TOL)
+        end_time_qp = time.time()
+        qp_time = end_time_qp - start_time_qp
+        # qp_obj = cost_fn_a_approx(a_n_opt_qp, b_n, kappa, lambd)
+        is_feasible_qp = check_constraints(a_n_opt_qp, cons, t_sample, ABS_TOL)
+        if not is_feasible_qp:
+            print("Constraints are not satisfied by the QP solution")
+            if TEST_CONSTRAINTS:
+                raise ValueError("Constraints are not satisfied by the QP solution")
+
+    if DO_SCI:
+        start_time_sci = time.time()
+        a_n_opt_sci, res = minimize_cons_scipy(b_n, kappa, lambd, cons=cons, abs_tol=ABS_TOL)
+        end_time_sci = time.time()
+        sci_time = end_time_sci - start_time_sci
+        # sci_obj = cost_fn_a_approx(a_n_opt_sci, b_n, kappa, lambd)
+        is_feasible_sci = check_constraints(a_n_opt_sci, cons, t_sample, ABS_TOL)
+        if not is_feasible_sci:
+            print("Constraints are not satisfied by the SciPy solution")
+            if TEST_CONSTRAINTS:
+                raise ValueError("Constraints are not satisfied by the SciPy solution")
+
+    return qp_time, sci_time
+
+
+def plot_times(N_values, qp_times, sci_times):
+    plt.plot(N_values, qp_times, label='QP Solver Time', color='red')
+    plt.plot(N_values, sci_times, label='SciPy Solver Time', color='blue', linestyle="dashed")
+    plt.xlabel('N')
+    plt.ylabel('Time (seconds)')
     plt.legend()
+    plt.title('QP Solver vs SciPy Solver Time')
+    plt.show()
+
+    plt.plot(N_values, qp_times, label='QP Solver Time', color='red')
+    plt.plot(N_values, sci_times, label='SciPy Solver Time', color='blue', linestyle="dashed")
+    plt.xlabel('N')
+    plt.ylabel('Log(Time (seconds))')
+    plt.yscale('log')
+    plt.legend()
+    plt.title('QP Solver vs SciPy Solver Time (Log Scale)')
+    plt.show()
+
+    ratio = [sci_times / qp_times for sci_times, qp_times in zip(sci_times, qp_times)]
+    plt.plot(N_values, ratio, label='SciPy/QP Time Ratio', color='green')
+    plt.xlabel('N')
+    plt.ylabel('time ratio')
+    plt.legend()
+    plt.title('SciPy/QP Time Ratio')
+    plt.grid()
     plt.show()
 
 
 if __name__ == "__main__":
-    # Example usage
-    #
-    a_n = np.zeros(N)
-    b_n = np.random.rand(N) * np.exp(-DECAY * np.arange(N))
+    N_values = [3, 5, 7, 10, 13, 16, 20, 25, 30, 35, 40, 50, 60, 70]  # Example list of N values
+    DECAY = 0.15
     kappa = 10
     lambd = 20
-    SOLVER = 'daqp'  # 'quadprog'
+    cons = {'overbuying': 1, 'short_selling': 0}
+    ABS_TOL = 1e-4
+    DO_QP = True
+    DO_SCI = True
 
-    # print(f"Initial a_n: {a_n}")
-    print(f"Initial b_n: {b_n}")
+    qp_times = []
+    sci_times = []
+    N_TRIES = 10
 
-    OVERBUYING = 2
-    C = -1
-    cons = {'overbuying': OVERBUYING, 'short_selling': C}
+    for N in N_values:
+        qp_total, sci_total = 0, 0
+        t_sample = None
+        for t in range(N_TRIES):
+            print(f"\nRunning for {N}, try {t+1}")
+            qp_time, sci_time = run_optimization(N, DECAY, kappa, lambd, cons, ABS_TOL, DO_QP, DO_SCI)
+            qp_total += qp_time
+            sci_total += sci_time
+            print(f"sci: {sci_time}, qp: {qp_time}")
+        qp_times.append(qp_total / N_TRIES)
+        sci_times.append(sci_total / N_TRIES)
 
-
-    def check_constraints(coeff):
-        # Check that all constraints have been satisfied
-        # Sample points
-        global t_sample
-        if t_sample is None:
-            t_sample = sample_sine_wave(list(range(1, len(coeff) + 1)), T_SAMPLE_PER_SEMI_WAVE)
-
-        def val_func(t):
-            return fr.reconstruct_from_sin(t, coeff) + t
-
-        vals = np.array([val_func(t) for t in t_sample])
-
-        # Overbuying constraint
-        if (ubound := cons.get('overbuying', None)) is not None:
-            cons_ubound = ubound - vals
-        else:
-            cons_ubound = None
-
-        # Short Selling  constraint
-        if (lbound := cons.get('short_selling', None)) is not None:
-            cons_lbound = vals - lbound
-        else:
-            cons_lbound = None
-
-        res = [x for x in [cons_ubound, cons_lbound] if x is not None]
-        if len(res) > 0:
-            return np.all(np.concatenate(res) >= -ABS_TOL)
-        else:
-            return True
-
-
-    # Solve using qpsolvers
-    if DO_QP:
-        start_time = time.time()
-        a_n_opt_qp, _ = minimize_cons_qpsolvers(b_n, kappa, lambd, cons=cons, abs_tol=ABS_TOL)
-        end_time = time.time()
-        print(f"Optimal a_n using qpsolvers: {a_n_opt_qp}")
-        qp_time = end_time - start_time
-        qp_obj = cost_fn_a_approx(a_n_opt_qp, b_n, kappa, lambd)
-        print(f"qpsolvers time taken: {qp_time:.4f} seconds")
-        print(f"Objective function value (qpsolvers): {qp_obj:.4f}")
-        is_feasible_qp = check_constraints(a_n_opt_qp)
-        if is_feasible_qp:
-            print("Constraints are satisfied by the QP solution")
-        else:
-            print("Constraints are not satisfied by the QP solution")
-
-    # Solve using scipy.optimize.minimize
-    if DO_SCI:
-        start_time = time.time()
-        a_n_opt_sci, res = minimize_cons_scipy(b_n, kappa, lambd, cons=cons, abs_tol=ABS_TOL)
-        sci_obj = cost_fn_a_approx(a_n_opt_sci, b_n, kappa, lambd)
-        end_time = time.time()
-        print("Optimal a_n using scipy:", a_n_opt_sci)
-        sci_time = end_time - start_time
-        print(f"scipy time taken: {sci_time:.4f} seconds")
-        print(f"Objective function value (scipy): {sci_obj:.4f}")
-        is_feasible_sci = check_constraints(a_n_opt_sci)
-        if is_feasible_sci:
-            print("Constraints are satisfied by the scipy solution")
-        else:
-            print("Constraints are not satisfied by the scipy solution")
-
-    if (qp_obj - sci_obj) >= ABS_TOL * abs(qp_obj):
-        print("QP solution is worse than scipy solution by more than ABS_TOL fraction")
-
-    if TEST_EXACT_COEFF:
-        np.testing.assert_allclose(a_n_opt_sci, a_n_opt_qp, atol=2e-3), \
-            f"Failed for \na_n_opt_qp={a_n_opt_qp}\n a_n_opt_sci={a_n_opt_sci}\n lambd={lambd}, kappa={kappa}, N={N}"
-
-    print("\n************\nTest passed!" +
-          f"\nqp is {sci_time / qp_time:.2f} times faster than scipy" +
-          "\n************")
-
-    plot_strategies(a_n_opt_qp, a_n_opt_sci, b_n, cons)
+    print("qp: ", qp_times)
+    print("sci: ", sci_times)
+    plot_times(N_values, qp_times, sci_times)

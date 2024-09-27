@@ -19,7 +19,7 @@ sys.path.append(os.path.abspath(os.path.join(CURRENT_DIR, '..\..', 'optimizer'))
 import trading_funcs as tf
 
 # *** Global Parameters ***
-ABS_TOL = 1e-6
+ABS_TOL = 1e-8
 DO_QP = True
 DO_SCI = True
 SOLVER = 'daqp'  # 'quadprog'
@@ -350,7 +350,7 @@ def test_scipy_both_constraints_not_binding():
     min_cost = ca.cost_fn_a_approx(a_n_opt, b_n, kappa, lambd)
     assert pt.approx(min_cost, rel=py_tol) == exp_cost, f"Expected cost {exp_cost}, got {min_cost}"
 
-@pt.mark.skip("Already tested")
+#@pt.mark.skip("Already tested")
 def test_scipy_overbuy_binding():
     kappa = 10
     lambd = 10
@@ -402,9 +402,85 @@ def test_scipy_overbuy_binding():
     print(f"Constraned Cost = {min_cost}, Unconstrained cost = {uncons_cost}")
     assert min_cost + 5 * py_tol >= uncons_cost, f"Constrained cost {exp_cost} < uncons cost {min_cost}"
 
-
+@pt.mark.skip("Already tested")
 def test_scipy_short_selling_binding():
     """ Check that scipy gives the right answer if there is a sort selling constraint, and it's not binding
+            An exaple where it's optimal for A to go short, but not to the limit.
+        """
+    """ Check that short selling constraint is working when it's not binding
+        for a risk-neutral strategy
+        """
+    kappa = 0.1
+    lambd = 20
+    sigma = 10
+    N = 20
+    py_tol = 1e-2
+    T_SAMPLE_PER_SEMI_WAVE = 5
+    PLOT_CHARTS = True
+
+    # Let be trade an eager risk-neutral strategy. Estimate coeffs from a formula
+    def b_func(t):
+        params = {'sigma': sigma, 'gamma': 1}
+        return tf.b_func_eager(t, params) - t
+
+    b_n = fr.sin_coeff(b_func, N)
+
+    if PLOT_CHARTS:
+        t_step = np.linspace(0, 1, 100)
+        b_vals = [b_func(t) + t for t in t_step]
+        b_approx = [fr.reconstruct_from_sin(t, b_n) + t for t in t_step]
+        plt.scatter(t_step, b_vals, s=10, label="b(t)", color="red")
+        plt.plot(t_step, b_approx, label="b(t)_approx", color="blue")
+        plt.title("b(t) vs. b(t)_approx")
+        plt.legend()
+        plt.grid()
+        plt.show()
+
+    # Deine the constraint function
+    OVERBUYING = 2
+    C = -5
+    cons = {'overbuying': OVERBUYING, 'short_selling': C}
+
+    a_n_opt, res = minimize_cons_scipy(b_n, kappa, lambd, cons=cons, abs_tol=ABS_TOL)
+
+    def is_ndarray_with_size_N(var, N):
+        return isinstance(var, np.ndarray) and (var.size == N)
+
+    assert is_ndarray_with_size_N(a_n_opt, N), "SciPy output is not a numpy array with size N"
+
+    # Expected values from Mathematica closed from solution
+    uncons_cost = -369.234
+
+    # Check that the constraint is satisfied
+    t_sample = sample_sine_wave(list(range(1, N + 1)), T_SAMPLE_PER_SEMI_WAVE)
+    vals = [fr.reconstruct_from_sin(t, res.x) + t for t in t_sample]
+    b_vals1 = [fr.reconstruct_from_sin(t, b_n) + t for t in t_sample]
+
+    if PLOT_CHARTS:
+        plt.plot(t_sample, vals, label="Optimal obj function", color='red');
+        plt.plot(t_sample, b_vals1, label="b(t)", color='blue');
+        plt.scatter(t_sample, np.ones(len(t_sample)) * C, s=10, label="Short selling limit", color='gray')
+        plt.scatter(t_sample, np.ones(len(t_sample)) * OVERBUYING, s=10, label="Short selling limit", color='gray')
+        plt.title("Optimal trading strategies vs. the constraints")
+        plt.grid()
+        plt.legend()
+        plt.show()
+
+    assert (pmin:= np.min(vals)) >= C - py_tol * 5, f"Short selling constraint violated.  Min value {pmin} < {C}"
+    assert (pmax:= np.max(vals)) <= OVERBUYING + py_tol * 5, f"OVERBUY constraint violated.  Min value {pmax} < {C}"
+
+    # Check that the minimum constrained cost is higher than the unconstrained cost
+    opt_cons_cost = ca.cost_fn_a_approx(a_n_opt, b_n, kappa, lambd)
+    print(f"Constraned Cost = {opt_cons_cost}, Unconstrained cost = {uncons_cost}")
+    assert opt_cons_cost + 5 * py_tol >= uncons_cost, f"Constrained cost {uncons_cost} < uncons cost {opt_cons_cost}"
+
+
+@pt.mark.skip("Already tested")
+def test_qp_short_selling_constraint_not_binding1():
+    """ Check that scipy gives the right answer if there is a sort selling constraint, and it's not binding
+        Start with a trivial example where A trades an eager strategy and B trades a risk-neutral strategy.
+    """
+    """ Check that qp gives the right answer if there is a sort selling constraint, and it's not binding
             An exaple where it's optimal for A to go short, but not to the limit.
         """
     """ Check that short selling constraint is working when it's not binding
@@ -437,10 +513,10 @@ def test_scipy_short_selling_binding():
 
     # Deine the constraint function
     OVERBUYING = 10
-    C = -3
+    C = -7
     cons = {'overbuying': OVERBUYING, 'short_selling': C}
 
-    a_n_opt, res = minimize_cons_scipy(b_n, kappa, lambd, cons=cons, abs_tol=ABS_TOL)
+    a_n_opt, res = minimize_cons_qpsolvers(b_n, kappa, lambd, cons=cons, abs_tol=ABS_TOL)
 
     def is_ndarray_with_size_N(var, N):
         return isinstance(var, np.ndarray) and (var.size == N)
@@ -453,7 +529,149 @@ def test_scipy_short_selling_binding():
     # Check that the constraint is satisfied
     T_SAMPLE_PER_SEMI_WAVE = 3
     t_sample = sample_sine_wave(list(range(1, N + 1)), T_SAMPLE_PER_SEMI_WAVE)
-    vals = [fr.reconstruct_from_sin(t, res.x) + t for t in t_sample]
+    vals = [fr.reconstruct_from_sin(t, a_n_opt) + t for t in t_sample]
+    b_vals1 = [fr.reconstruct_from_sin(t, b_n) + t for t in t_sample]
+
+    if PLOT_CHARTS:
+        plt.plot(t_sample, vals, label="Optimal obj function", color='red');
+        plt.plot(t_sample, b_vals1, label="b(t)", color='blue');
+        plt.scatter(t_sample, np.ones(len(t_sample)) * C, s=10, label="Short selling limit", color='gray')
+        plt.scatter(t_sample, np.ones(len(t_sample)) * OVERBUYING, s=10, label="Short selling limit", color='gray')
+        plt.title("Optimal trading strategies vs. the constraints")
+        plt.grid()
+        plt.legend()
+        plt.show()
+
+    assert (pmin:= np.min(vals)) >= C - py_tol * 5, f"Short selling constraint violated.  Min value {pmin} < {C}"
+    assert (pmax:= np.max(vals)) <= OVERBUYING + py_tol * 5, f"OVERBUY constraint violated.  Min value {pmax} < {C}"
+
+    # Check that the minimum constrained cost is higher than the unconstrained cost
+    opt_cons_cost = ca.cost_fn_a_approx(a_n_opt, b_n, kappa, lambd)
+    print(f"Constraned Cost = {opt_cons_cost}, Unconstrained cost = {uncons_cost}")
+    assert opt_cons_cost + 5 * py_tol >= uncons_cost, f"Constrained cost {uncons_cost} < uncons cost {opt_cons_cost}"
+
+
+def test_qp_short_selling_constraint_binding():
+    """ Check that scipy gives the right answer if there is a sort selling constraint, and it's not binding
+        Start with a trivial example where A trades an eager strategy and B trades a risk-neutral strategy.
+    """
+    """ Check that qp gives the right answer if there is a sort selling constraint, and it's not binding
+            An exaple where it's optimal for A to go short, but not to the limit.
+        """
+    """ Check that short selling constraint is working when it's not binding
+        for a risk-neutral strategy
+        """
+    kappa = 0.1
+    lambd = 20
+    sigma = 10
+    N = 20
+    py_tol = 1e-2
+    PLOT_CHARTS = True
+    T_SAMPLE_PER_SEMI_WAVE = 10
+
+    # Let be trade an eager risk-neutral strategy. Estimate coeffs from a formula
+    def b_func(t):
+        params = {'sigma': sigma, 'gamma': 1}
+        return tf.b_func_eager(t, params) - t
+
+    b_n = fr.sin_coeff(b_func, N)
+
+    if PLOT_CHARTS:
+        t_step = np.linspace(0, 1, 100)
+        b_vals = [b_func(t) + t for t in t_step]
+        b_approx = [fr.reconstruct_from_sin(t, b_n) + t for t in t_step]
+        plt.scatter(t_step, b_vals, s=10, label="b(t)", color="red")
+        plt.plot(t_step, b_approx, label="b(t)_approx", color="blue")
+        plt.title("b(t) vs. b(t)_approx")
+        plt.legend()
+        plt.grid()
+        plt.show()
+
+    # Deine the constraint function
+    OVERBUYING = 2
+    C = -5
+    cons = {'overbuying': OVERBUYING, 'short_selling': C}
+
+    a_n_opt, res = minimize_cons_qpsolvers(b_n, kappa, lambd, cons=cons, abs_tol=ABS_TOL)
+
+    def is_ndarray_with_size_N(var, N):
+        return isinstance(var, np.ndarray) and (var.size == N)
+
+    assert is_ndarray_with_size_N(a_n_opt, N), "SciPy output is not a numpy array with size N"
+
+    # Expected values from Mathematica closed from solution
+    uncons_cost = -369.234
+
+    # Check that the constraint is satisfied
+    t_sample = sample_sine_wave(list(range(1, N + 1)), T_SAMPLE_PER_SEMI_WAVE)
+    vals = [fr.reconstruct_from_sin(t, a_n_opt) + t for t in t_sample]
+    b_vals1 = [fr.reconstruct_from_sin(t, b_n) + t for t in t_sample]
+
+    if PLOT_CHARTS:
+        plt.plot(t_sample, vals, label="Optimal obj function", color='red');
+        plt.plot(t_sample, b_vals1, label="b(t)", color='blue');
+        plt.scatter(t_sample, np.ones(len(t_sample)) * C, s=10, label="Short selling limit", color='gray')
+        plt.scatter(t_sample, np.ones(len(t_sample)) * OVERBUYING, s=10, label="Short selling limit", color='gray')
+        plt.title("Optimal trading strategies vs. the constraints")
+        plt.grid()
+        plt.legend()
+        plt.show()
+
+    assert (pmin:= np.min(vals)) >= C - py_tol * 5, f"Short selling constraint violated.  Min value {pmin} < {C}"
+    assert (pmax:= np.max(vals)) <= OVERBUYING + py_tol * 5, f"OVERBUY constraint violated.  Min value {pmax} < {C}"
+
+    # Check that the minimum constrained cost is higher than the unconstrained cost
+    opt_cons_cost = ca.cost_fn_a_approx(a_n_opt, b_n, kappa, lambd)
+    print(f"Constraned Cost = {opt_cons_cost}, Unconstrained cost = {uncons_cost}")
+    assert opt_cons_cost + 5 * py_tol >= uncons_cost, f"Constrained cost {uncons_cost} < uncons cost {opt_cons_cost}"
+
+
+def test_qp_overbuy_binding():
+    """ Check that qp gives the right answer if there is a binding overbuy constraint
+        Assume B trades a risk-neutral strategy with high kappa and lambda
+    """
+    kappa = 10
+    lambd = 10
+    N = 10
+    py_tol = 1e-2
+    PLOT_CHARTS = True
+    T_SAMPLE_PER_SEMI_WAVE = 10
+
+    # Let B trade a risk-neutral strategy
+    def b_func(t):
+        return 0
+
+    b_n = np.zeros(N)
+
+    if PLOT_CHARTS:
+        t_step = np.linspace(0, 1, 100)
+        b_vals = [b_func(t) + t for t in t_step]
+        b_approx = [fr.reconstruct_from_sin(t, b_n) + t for t in t_step]
+        plt.scatter(t_step, b_vals, s=10, label="b(t)", color="red")
+        plt.plot(t_step, b_approx, label="b(t)_approx", color="blue")
+        plt.title("b(t) vs. b(t)_approx")
+        plt.legend()
+        plt.grid()
+        plt.show()
+
+    # Deine the constraint function
+    OVERBUYING = 5
+    C = 0
+    cons = {'overbuying': OVERBUYING, 'short_selling': C}
+
+    a_n_opt, res = minimize_cons_qpsolvers(b_n, kappa, lambd, cons=cons, abs_tol=ABS_TOL)
+
+    def is_ndarray_with_size_N(var, N):
+        return isinstance(var, np.ndarray) and (var.size == N)
+
+    assert is_ndarray_with_size_N(a_n_opt, N), "SciPy output is not a numpy array with size N"
+
+    # Expected values from Mathematica closed from solution
+    uncons_cost = -427.0 / 3.0
+
+    # Check that the constraint is satisfied
+    t_sample = sample_sine_wave(list(range(1, N + 1)), T_SAMPLE_PER_SEMI_WAVE)
+    vals = [fr.reconstruct_from_sin(t, a_n_opt) + t for t in t_sample]
     b_vals1 = [fr.reconstruct_from_sin(t, b_n) + t for t in t_sample]
 
     if PLOT_CHARTS:
