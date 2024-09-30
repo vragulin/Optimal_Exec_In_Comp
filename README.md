@@ -44,9 +44,9 @@ The theoretical framework is based on the Chriss(2024) series of papers. The mai
 
 ## Usage
 
-The repository contains two sets of scripts.  The scripts in the `optimizer_paper` directory were used to produce charts and analytics for the Chriss(2024)[2] paper and use the Scipy.optimize.minimize general solver for find the optimal trading strategies. 
+The repository contains two sets of scripts.  The scripts in the `optimizer_paper/` directory were used to produce charts and analytics for the Chriss(2024)[2] paper and use the Scipy.optimize.minimize general solver to find the optimal trading strategies. 
 
-The scripts in the `optimizer_qp` directory have the same functionality, but enable the use of a specialized QP solver DAQP (https://darnstrom.github.io/daqp/start/), which is considerably faster.
+The scripts in the `optimizer_qp/` directory have the same functionality but enable the use of a considerably faster specialized QP solver, DAQP (https://darnstrom.github.io/daqp/start/).
 
 ![](https://github.com/vragulin/Optimal_Exec_In_Comp/blob/main/readme_figures/QP_v_SciPy_solver_times_log.png)
 ![](https://github.com/vragulin/Optimal_Exec_In_Comp/blob/main/readme_figures/Speed_Ratio_QP_v_SciPy.png)
