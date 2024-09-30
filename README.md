@@ -48,8 +48,8 @@ The repository contains two sets of scripts.  The scripts in the `optimizer_pape
 
 The scripts in the `optimizer_qp` directory have the same functionality, but enable the use of a specialized QP solver DAQP (https://darnstrom.github.io/daqp/start/), which is considerably faster.
 
-![](C:\Users\vragu\OneDrive\Desktop\Proj\OptExecution\readme_figures\QP_v_SciPy_solver_times_log.png)
-![](C:\Users\vragu\OneDrive\Desktop\Proj\OptExecution\readme_figures\Speed_Ratio_QP_v_SciPy.png)
+![](https://github.com/vragulin/Optimal_Exec_In_Comp/blob/main/readme_figures/QP_v_SciPy_solver_times_log.png)
+![](https://github.com/vragulin/Optimal_Exec_In_Comp/blob/main/readme_figures/Speed_Ratio_QP_v_SciPy.png)
 
 Both sets of scripts (optimizer_paper and optimizer_qp) have the same structure and can be run in the same way.  The main scripts are:
 1. Caclulate the optimal response to a known trading strategy by an Adversary:
