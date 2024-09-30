@@ -4,7 +4,7 @@ import pytest as pt
 import os
 import sys
 current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.abspath(os.path.join(current_dir, '../../optimizer')))
+sys.path.append(os.path.abspath(os.path.join(current_dir, '../../optimizer_paper')))
 import trading_funcs as tf
 
 

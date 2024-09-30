@@ -16,13 +16,13 @@ sys.path.append(os.path.abspath(os.path.join(current_dir, '..', 'cost_function')
 import fourier as fr
 from cost_function_approx import cost_fn_a_approx
 from sampling import sample_sine_wave
-import trading_funcs as tf
+from optimizer_paper import trading_funcs as tf
 
 # Global Parameters
-N = 10  # number of Fourier terms
-lambd_list = [1, 2, 5, 10]  # temporary impact
+N = 7  # number of Fourier terms
+lambd_list = [0.02, 0.05, 0.5, 1]  # temporary impact
 kappa_list = [0.5, 2, 10, 20]  # Time by which we have to be "in the box"
-sigma_list = [None, 1, 5, 10]  # percent that needs to be completed
+sigma_list = [None, 2, 5, 10]  # percent that needs to be completed
 xi_a = 0  # risk aversion of
 gamma = 1  # Target position at t=1
 
@@ -30,7 +30,6 @@ T_SAMPLE_PER_SEMI_WAVE = 3  # number of points to sample constraints
 N_PLOT_POINTS = 100  # number of points for plotting
 RED_COLORS = ["darkred", "firebrick", "crimson", "indianred", "tomato"]
 LINE_STYLES = ['-', '--', '-.', ':', (0, (3, 1, 1, 1))]
-INCLUDE_SUPTITLE = False
 
 # Parameters for the b(t) function
 RISK_NEUTRAL, RISK_AVERSE, EAGER, EQ_2TRADER, PARABOLIC = range(5)
@@ -85,23 +84,23 @@ def plot_one_cell(opt_coeffs_frame: np.ndarray, ax: Any, params: dict) -> None:
                 linestyle=LINE_STYLES[u])
 
         if sigma is not None:
-            lbound = [eager_bmk(t, sigma) for t in t_values]
+            lbound = [risk_averse_bmk(t, sigma) for t in t_values]
             ax.fill_between(t_values, lbound, t_values,
-                            color='grey', alpha=0.1 + 0.1 * (u + 1))
+                            color='grey', alpha=0.15 + 0.1 * (u + 1))
 
     if B_INV_TYPE != RISK_NEUTRAL:
         ax.plot(t_values, t_values, color="black", linestyle="dashed")
-    ax.plot(t_values, b_curve, label=r"$b_\lambda(t)$", color="blue")
+    # ax.plot(t_values, b_curve, label="b(t)", color="blue")
 
-    ax.set_title(f'λ={lambd}, ' + r'$\kappa$' + f'={kappa}')
+    ax.set_title(f'λ={lambd}, ' + r'$kappa$' + f'={kappa}')
     ax.legend()  # prop={'size': 6})
     ax.set_xlabel('t')
-    ax.set_ylabel(r'$a(t), b_\lambda(t)$')
+    ax.set_ylabel('a(t), b(t)')
     ax.grid()
 
 
-def eager_bmk(t: float, sigma: float) -> float:
-    return tf.b_func_eager(t, {'sigma': sigma, 'gamma': gamma})
+def risk_averse_bmk(t: float, sigma: float) -> float:
+    return np.sinh(sigma * t) / np.sinh(sigma)
 
 
 def make_plot_suptitle():
@@ -114,7 +113,7 @@ def make_plot_suptitle():
          + r'who is trading the $\lambda$-scaled strategy $b(t; \lambda)$ '
            r'with permanent impact $\kappa$')
     s += ",\n" + (r"the Constraint requires that the position $a(t)$ is "
-                  r"between t and the eager benchmark $c(t;\sigma)$")
+                  r"between the risk-averse benchmark $c(t;\sigma)$ and t")
     return s
 
 
@@ -122,8 +121,7 @@ if __name__ == "__main__":
     # Minimize the cost function
 
     fig, axs = plt.subplots(len(kappa_list), len(lambd_list), figsize=(16, 16))
-    if INCLUDE_SUPTITLE:
-        plt.suptitle(make_plot_suptitle(), fontsize=16)
+    plt.suptitle(make_plot_suptitle(), fontsize=16)
 
     # Set up an array to keep answers and constraints for different value of sigma
     a_coeffs_frame = np.zeros((len(sigma_list), N))
@@ -144,10 +142,10 @@ if __name__ == "__main__":
             for u, sigma in enumerate(sigma_list):
 
                 def U_func(t):
-                    return eager_bmk(t, sigma)
+                    return t
 
                 def L_func(t):
-                    return t
+                    return risk_averse_bmk(t, sigma)
 
                 def constraint_function(a_coeffs):
                     # Sample points

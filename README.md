@@ -10,8 +10,9 @@ The analytics cover
 
 The theoretical framework is based on the Chriss(2024) series of papers. The main papers are:
 
-*  Optimal Position Building Strategies in Competition:  https://arxiv.org/pdf/2409.03586
-*  Position-Building in Competition with Real-World Constraints: https://arxiv.org/abs/2409.15459
+[1] Optimal Position Building Strategies in Competition:  https://arxiv.org/pdf/2409.03586
+
+[2] Position-Building in Competition with Real-World Constraints: https://arxiv.org/abs/2409.15459
 
 
 ## Table of Contents
@@ -43,6 +44,14 @@ The theoretical framework is based on the Chriss(2024) series of papers. The mai
 
 ## Usage
 
+The repository contains two sets of scripts.  The scripts in the `optimizer_paper` directory were used to produce charts and analytics for the Chriss(2024)[2] paper and use the Scipy.optimize.minimize general solver for find the optimal trading strategies. 
+
+The scripts in the `optimizer_qp` directory have the same functionality, but enable the use of a specialized QP solver DAQP (https://darnstrom.github.io/daqp/start/), which is considerably faster.
+
+![](C:\Users\vragu\OneDrive\Desktop\Proj\OptExecution\readme_figures\QP_v_SciPy_solver_times_log.png)
+![](C:\Users\vragu\OneDrive\Desktop\Proj\OptExecution\readme_figures\Speed_Ratio_QP_v_SciPy.png)
+
+Both sets of scripts (optimizer_paper and optimizer_qp) have the same structure and can be run in the same way.  The main scripts are:
 1. Caclulate the optimal response to a known trading strategy by an Adversary:
     ```sh
     python optimizer/opt_cost.py
@@ -75,7 +84,8 @@ Alternatively, your own bespoke trading strategy can be defined via a callback f
 
 ## Project Structure
 
-- `optimizer/`: Main scripts used to solve trading strategy optimizations and generate plots for the Chriss(2024) papers.
+- `optimizer_paper/`: Main scripts used to solve trading strategy optimizations and generate plots for the Chriss(2024) papers.
+- `optimizer_qp/`: Faster optimziation scripts using the QP solver.
 - `cost_function/`: Modules for calculating trading costs in competitive settings.
 - `fourier/`: Directory containing helper functions for approximating trading trajectories with Fourier and Sine Series.
 - `results/`: Directory containing simulation results.

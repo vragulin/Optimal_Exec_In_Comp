@@ -8,13 +8,13 @@ import os
 import pickle
 from collections import namedtuple
 import sys
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.abspath(os.path.join(CURRENT_DIR, '..', 'cost_function')))
 import cost_function_approx as ca
 import fourier as fr
-import trading_funcs as tf
+from optimizer_paper import trading_funcs as tf
 import config as cfg
 
 # Global Parameters

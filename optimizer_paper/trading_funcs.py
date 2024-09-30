@@ -44,12 +44,12 @@ def b_dot_func_eager(t: float, params: dict) -> float:
 # ---------------------------------------------
 def b_func_parabolic(t: float, params: dict) -> float:
     c, gamma = params['c'], params['gamma']
-    return gamma * t + t * (t - c) / (1 - c)
+    return gamma * t * (t - c) / (1 - c)
 
 
 def b_dot_func_parabolic(t: float, params: dict) -> float:
     c, gamma = params['c'], params['gamma']
-    return gamma - (2 * t - c) / (1 - c)
+    return gamma * (2 * t - c) / (1 - c)
 
 
 # ---------------------------------------------

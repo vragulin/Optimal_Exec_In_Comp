@@ -6,7 +6,7 @@ import os
 import sys
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.abspath(os.path.join(current_dir, '../../cost_function')))
-sys.path.append(os.path.abspath(os.path.join(current_dir, '../../optimizer')))
+sys.path.append(os.path.abspath(os.path.join(current_dir, '../../optimizer_paper')))
 sys.path.append(os.path.abspath(os.path.join(current_dir, '../../representation')))
 import trading_funcs as tf
 from strategy_class import EncodedStrategy

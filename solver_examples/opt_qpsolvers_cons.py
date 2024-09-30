@@ -13,9 +13,11 @@ import time
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.abspath(os.path.join(CURRENT_DIR, '..', 'cost_function')))
+sys.path.append(os.path.abspath(os.path.join(CURRENT_DIR, '..', 'optimizer_qp')))
 from cost_function_approx import cost_fn_a_approx
 from sampling import sample_sine_wave
 import fourier as fr
+import trading_funcs_qp as tf
 
 # *** Global Parameters ***
 ABS_TOL = 1e-4
@@ -205,9 +207,10 @@ if __name__ == "__main__":
     # Example usage
     #
     a_n = np.zeros(N)
-    b_n = np.random.rand(N) * np.exp(-DECAY * np.arange(N))
-    kappa = 10
+    # b_n = np.random.rand(N) * np.exp(-DECAY * np.arange(N))
+    kappa = 0.1
     lambd = 20
+    b_n = fr.sin_coeff(lambda t: tf.equil_2trader(t, kappa=kappa, lambd=lambd, trader_a=True)-t, N)
     SOLVER = 'daqp'  # 'quadprog'
 
     # print(f"Initial a_n: {a_n}")
