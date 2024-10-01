@@ -116,7 +116,7 @@ def cost_fn_prop_a_integ_approx(a_n: np.ndarray, b_n: np.ndarray, lambd, rho, ve
 
 
 def cost_fn_prop_a_approx(a_n: np.ndarray, b_n: np.ndarray, lambd, rho, verbose=False, **kwargs):
-    """ Compute the exact value of the cost function for the given Fourier coefficients
+    """ Compute the exact value of the cost function of Trader A for the given Fourier coefficients
         using the analytic formula in terms of the Fourier coefficients from the Chriss(24) paper.
 
     :param a_n: the Fourier coefficients for the a(t) function.
@@ -149,7 +149,7 @@ def cost_fn_prop_a_approx(a_n: np.ndarray, b_n: np.ndarray, lambd, rho, verbose=
     K = (1 + lambd) / rho + rho * np.sum(d_n)
 
     # Term 1
-    t1 = (exp(-rho) -1)/ rho * K
+    t1 = (exp(-rho) - 1) / rho * K
 
     # Term 2
     t2 = 2 * np.sum(d_n * n_odd)
@@ -158,11 +158,11 @@ def cost_fn_prop_a_approx(a_n: np.ndarray, b_n: np.ndarray, lambd, rho, verbose=
     t3 = (1 + lambd) / rho
 
     # Term 4
-    t4 = -K * np.sum((a_n * n * pi * rho) / (rho ** 2 + (n * pi) ** 2)
-                     * (1 + neg_one_to_n * exp(-rho)))
+    t4 = -K * pi * rho * np.sum((a_n * n) / (rho ** 2 + (n * pi) ** 2)
+                     * (1 - neg_one_to_n * exp(-rho)))
 
     # Term 5
-    t5_1 = np.sum(a_n * n * pi * d_n * rho)
+    t5_1 = 0.5 * pi * rho * np.sum(a_n * n * d_n)
     t5_2 = 2 * pi * np.sum(d_n[:, None] * (a_n * n)[None, :] * M)
     t5 = t5_1 + t5_2
 
@@ -177,3 +177,19 @@ def cost_fn_prop_a_approx(a_n: np.ndarray, b_n: np.ndarray, lambd, rho, verbose=
         print(f"Term 5: {t5}, terms 5_1: {t5_1}, terms 5_2: {t5_2}")
         print(f"Sum: {t1 + t2 + t3 + t4 + t5}")
     return t1 + t2 + t3 + t4 + t5
+
+
+def cost_fn_prop_b_approx(a_n: np.ndarray, b_n: np.ndarray, lambd, rho, verbose=False, **kwargs):
+    """ Compute the exact value of the cost function of Trader B for the given Fourier coefficients
+        using the analytic formula in terms of the Fourier coefficients from the Chriss(24) paper.
+
+    :param a_n: the Fourier coefficients for the a(t) function.
+    :param b_n: the Fourier coefficients for the b(t) function.
+    :param lambd: Size of trader B.
+    :param rho: Exponential decay of the propagator.
+    :param verbose: If True, print the intermediate results. Defaults to False.
+    :param kwargs: can pass precomputed values via 'precomp' key
+
+    :return: The value of the cost function.
+    """
+    return lambd ** 2 * cost_fn_prop_a_approx(b_n, a_n, 1/lambd, rho, verbose, **kwargs)

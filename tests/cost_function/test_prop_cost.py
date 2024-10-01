@@ -115,9 +115,9 @@ def test_approx_risk_averse(rho):
 
 
 @pt.mark.parametrize("rho, expected", [
-    # (0.25, -0.444441),
+    (0.25, -0.444441),
     (1.0, 0.432887),
-    # (10, 1.07144)
+    (10, 1.07144)
 ])
 def test_approx_first_term1(rho, expected):
     a_n = np.array([1, 0])
@@ -139,6 +139,31 @@ def test_approx_first_term2(rho, expected):
     actual = pp.cost_fn_prop_a_approx(a_n, b_n, lambd, rho, verbose=True)
     assert pt.approx(actual, abs=1e-5) == expected
 
+
+@pt.mark.parametrize("rho, expected", [
+    (0.5, 2.3671),
+    (1.0, 1.99286),
+    (5.0, 1.57898),
+])
+def test_approx_second_term1(rho, expected):
+    a_n = np.array([0, 1])
+    b_n = np.array([0, 0])
+    lambd = 5
+    actual = pp.cost_fn_prop_a_approx(a_n, b_n, lambd, rho, verbose=True)
+    assert pt.approx(actual, abs=1e-5) == expected
+
+
+@pt.mark.parametrize("rho, expected", [
+    (0.5, 2.24559),
+    (1.0, 1.71668),
+    (5.0, 0.477668),
+])
+def test_approx_second_term2(rho, expected):
+    a_n = np.array([0, 0])
+    b_n = np.array([0, 1])
+    lambd = 5
+    actual = pp.cost_fn_prop_a_approx(a_n, b_n, lambd, rho, verbose=True)
+    assert pt.approx(actual, abs=1e-5) == expected
 
 
 @pt.mark.parametrize("rho, expected", [
