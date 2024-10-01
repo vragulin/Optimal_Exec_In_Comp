@@ -16,7 +16,7 @@ sys.path.append(os.path.abspath(os.path.join(current_dir, '..', 'cost_function')
 import fourier as fr
 from cost_function_approx import cost_fn_a_approx
 import qp_solvers as qp
-import trading_funcs_qp as tf
+import trading_funcs as tf
 from sampling import sample_sine_wave
 
 # Global Parameters

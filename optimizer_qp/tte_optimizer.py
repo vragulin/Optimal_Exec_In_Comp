@@ -1,8 +1,6 @@
 """  Numerically solving for the two-trader equilibrium
      Implements 2 contstraints:  overbuying and short selling for both traders.
 """
-# ToDo - refactor to change LAMBDA, KAPPA from global to parameters.  Otherwise class State can't be used in other
-#        scripts
 import numpy as np
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
@@ -15,7 +13,7 @@ import config as cfg
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.abspath(os.path.join(CURRENT_DIR, '..', 'cost_function')))
-import trading_funcs_qp as tf
+import trading_funcs as tf
 import cost_function_approx as ca
 import fourier as fr
 import qp_solvers as qp

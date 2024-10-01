@@ -16,7 +16,7 @@ sys.path.append(os.path.abspath(os.path.join(current_dir, '..', 'cost_function')
 sys.path.append(os.path.abspath(os.path.join(current_dir, '..', 'optimizer_qp')))
 import fourier as fr
 from propagator import cost_fn_prop_a_approx, prop_price_impact_approx
-import trading_funcs_qp as tf
+import trading_funcs as tf
 
 # Global Parameters
 N = 200  # number of Fourier terms
@@ -142,8 +142,6 @@ def solve_min_cost(c: CostFunction, init_guess: np.ndarray) -> Tuple[np.ndarray,
 
 
 def main():
-    # ToDo - plot price impact over time, maybe on a separate plot, also show function derivs
-    #  Make it a 2x1 grid
     # Set up the environment  with a function from the trading_funcs_qp module
     # or it can be any other function defined in this or another module.
     # -------------------------------------------------------------------------

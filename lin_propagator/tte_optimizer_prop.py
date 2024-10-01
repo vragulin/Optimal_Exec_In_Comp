@@ -1,8 +1,6 @@
 """  Numerically solving for the two-trader equilibrium
      Implements 2 contstraints:  overbuying and short selling for both traders.
 """
-# ToDo - refactor to change LAMBDA, KAPPA from global to parameters.  Otherwise class State can't be used in other
-#        scripts
 import numpy as np
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
@@ -11,26 +9,27 @@ from typing import Any, List, Dict
 import os
 import sys
 import pickle
-import config as cfg
+import config_prop as cfg
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.abspath(os.path.join(CURRENT_DIR, '..', 'cost_function')))
+sys.path.append(os.path.abspath(os.path.join(CURRENT_DIR, '..', 'optimizer_qp')))
 import trading_funcs as tf
 import cost_function_approx as ca
 import fourier as fr
+import propagator as pp
 import qp_solvers as qp
-from sampling import sample_sine_wave
 
 # Parameters and Constants
-LAMBD = 20
-KAPPA = 10
-N = 10
-OVERBUY = 3
+LAMBD = 5  # sixe of Trader B
+RHO = 10  # propagator decay
+N = 200  # number of Fourier Terms
 GAMMA = 0.8  # Fraction of the way to move towards the new solution (float e.g. 1.0)
+KAPPA = 10  # Parameter for the equilibrium strategy benchmark (permanent impact)
 
 TOL_COEFFS = 1e-4
 TOL_COSTS = TOL_COEFFS
-MAX_ITER = 100
+MAX_ITER = 2
 MAX_ABS_COST = 1e10
 N_PLOT_POINTS = 100
 N_ITER_LINES = 4
@@ -46,14 +45,9 @@ SOLVER = SCIPY
 # Initialize codes for the traders (like an enum)
 TRADER_A, TRADER_B = range(2)
 
-# Constraints (level for traders A,B in order)
-CONS_OVERBUYING = (OVERBUY, OVERBUY)  # [3, 3]
-CONS_SHORT_SELL = (0, None)  # (None, None)  # [-1, 0]
-T_SAMPLE_PER_SEMI_WAVE = 3  # number of points to sample constraints
-
 # Parameters to save simulation results
 SAVE_RESULTS = True
-CONS_SUFFIX = f"g{GAMMA}_o{CONS_OVERBUYING[0]}"
+DATA_FILE_SUFFIX = f"_g{GAMMA}"
 
 
 class State:
@@ -61,9 +55,12 @@ class State:
     def __init__(self, **kwargs):
         # ToDo: write a docstring
         # Read model parameters
-        self.kappa = kwargs.get('kappa', 0)
+        self.rho = kwargs.get('rho', 0)
         self.lambd = kwargs.get('lambd', 1)
         self.gamma = kwargs.get('gamma', 0.8)
+        self.kappa = kwargs.get('kappa', 1)
+
+        assert self.rho > 0, "The propagator decay parameter rho must be positive"
 
         # Read initial strategy coefficients
         N = kwargs.get('N', DEFAULT_N)
@@ -78,26 +75,14 @@ class State:
 
         # Update the costs for A and B if required
         if kwargs.get("calc_costs", True):
-            self.a_cost = ca.cost_fn_a_approx(self.a_coeff, self.b_coeff, self.kappa, self.lambd)
-            self.b_cost = ca.cost_fn_b_approx(self.a_coeff, self.b_coeff, self.kappa, self.lambd)
+            self.a_cost = pp.cost_fn_prop_a_approx(self.a_coeff, self.b_coeff, self.lambd, self.rho)
+            self.b_cost = pp.cost_fn_prop_b_approx(self.a_coeff, self.b_coeff, self.lambd, self.rho)
         else:
             self.a_cost = None
             self.b_cost = None
 
         # Store precomputed variables to speed up the optimization
-        self.precomp = {}
-        self._t_sample = None
-
-    @property
-    def t_sample(self):
-        if self._t_sample is not None:
-            return self._t_sample
-        elif (val := self.precomp.get('t_sample')) is not None:
-            self._t_sample = val
-            return val
-        else:
-            self._t_sample = sample_sine_wave(list(range(1, self.N + 1)), T_SAMPLE_PER_SEMI_WAVE)
-        return self._t_sample
+        self._precomp = {}
 
     @staticmethod
     def _initialize_n(a_coeff: np.ndarray, b_coeff: np.ndarray, n: int) -> int:
@@ -120,7 +105,7 @@ class State:
         """
         # Create a new instance with the current attributes
         new_state = State(
-            kappa=kwargs.get('kappa', self.kappa),
+            rho=kwargs.get('rho', self.rho),
             lambd=kwargs.get('lambd', self.lambd),
             gamma=kwargs.get('gamma', self.gamma),
             N=kwargs.get('N', self.N),
@@ -134,7 +119,7 @@ class State:
             setattr(new_state, key, value)
 
         if ('copy_precomp' not in kwargs) or kwargs['copy_precomp']:
-            new_state.precomp = self.precomp.copy()
+            new_state._precomp = self._precomp.copy()
 
         return new_state
 
@@ -165,7 +150,7 @@ class State:
             f"cost(a) = {a_cost_str},\t"
             f"cost(b) = {b_cost_str}\n"
             f"lambda = {self.lambd},\t"
-            f"kappa = {self.kappa},\t"
+            f"rho = {self.rho},\t"
             f"gamma = {self.gamma},\t"
             f"n = {self.N}"
         )
@@ -176,68 +161,34 @@ class State:
         start_time = time.time()
         if SOLVER == SCIPY:
             cost_function, init_guess = self._get_cost_function_and_guess(solve)
-
-            constraints = self._get_constraints(solve)
-            if (constraints is not None) and any(cons_check := constraints['fun'](init_guess) <= 0):
-                print(f"Initial guess violates constraints: {cons_check}")
-                return self
-
             args = (self.a_coeff, self.b_coeff)
 
-            result = minimize(cost_function, init_guess, args=args, constraints=constraints)
+            result = minimize(cost_function, init_guess, args=args)
             opt_coeff = result.x
         else:
-            opt_coeff, result = self._minimize_cost_qp(solve)
+            raise NotImplementedError("Only SCIPY solver is implemented")
+            # opt_coeff, result = self._minimize_cost_qp(solve)
 
         print(f"Optimization time = {(time.time() - start_time):.4f}s")
 
         # Generate a new updated state
         res_state = self._generate_new_state(solve, opt_coeff)
-        res_state.a_cost = ca.cost_fn_a_approx(self.a_coeff, self.b_coeff, self.kappa, self.lambd)
-        res_state.b_cost = ca.cost_fn_b_approx(self.a_coeff, self.b_coeff, self.kappa, self.lambd)
+        res_state.a_cost = pp.cost_fn_prop_a_approx(self.a_coeff, self.b_coeff, self.lambd, self.rho)
+        res_state.b_cost = pp.cost_fn_prop_b_approx(self.a_coeff, self.b_coeff, self.lambd, self.rho)
 
         return res_state
 
     def _get_cost_function_and_guess(self, solve: int):
         if solve == TRADER_A:
             return (
-                lambda x, a_coeff, b_coeff: ca.cost_fn_a_approx(x, b_coeff, self.kappa, self.lambd),
+                lambda x, a_coeff, b_coeff: pp.cost_fn_prop_a_approx(x, b_coeff, self.lambd, self.rho),
                 self.a_coeff
             )
         else:
             return (
-                lambda x, a_coeff, b_coeff: ca.cost_fn_b_approx(a_coeff, x, self.kappa, self.lambd),
+                lambda x, a_coeff, b_coeff: pp.cost_fn_prop_b_approx(a_coeff, x, self.lambd, self.rho),
                 self.b_coeff
             )
-
-    def _get_constraints(self, solve: int):
-        """ Define optimizaton constraints
-        """
-        trader_idx = TRADER_A if solve == TRADER_A else TRADER_B
-
-        def constraint_function(x):
-            # Sample points
-            strat_values = np.array([fr.reconstruct_from_sin(t, x) + t for t in self.t_sample])
-            const_list = []
-
-            if (lbound := CONS_SHORT_SELL[trader_idx]) is not None:
-                const_list.append(strat_values - lbound)
-            if (ubound := CONS_OVERBUYING[trader_idx]) is not None:
-                const_list.append(ubound - strat_values)
-
-            if len(const_list) > 0:
-                return np.concatenate(const_list)
-            else:
-                return np.ones(1)  # If there are no constraints, always return True
-
-        # Define the constraint set
-        if (CONS_OVERBUYING[trader_idx] is not None) or (CONS_SHORT_SELL[trader_idx] is not None):
-            return ({
-                'type': 'ineq',
-                'fun': constraint_function
-            })
-        else:
-            return None
 
     def _generate_new_state(self, solve: int, opt_coeff: np.ndarray) -> "State":
         if solve == TRADER_A:
@@ -247,29 +198,16 @@ class State:
             b_coeff_new = opt_coeff * self.gamma + self.b_coeff * (1 - self.gamma)
             return self.copy(a_coeff=self.a_coeff, b_coeff=b_coeff_new, calc_costs=False)
 
-    def _minimize_cost_qp(self, solve):
-        # Precalculate matrices and vectors for the optimization
-        _ = qp.precalc_obj_func_constants(self.N, self.precomp)
-
-        # Prepare constraints
-        constraint_constants = {}
-        _ = qp.precalc_constraint_constants(self.N, constraint_constants,
-                                            t_sample_per_semi_wave=T_SAMPLE_PER_SEMI_WAVE)
-        self.precomp.update(constraint_constants)
-        cons = State._build_qp_constraints(solve)
-
-        if solve == TRADER_A:
-            return qp.min_cost_A_qp(self.b_coeff, self.kappa, self.lambd, abs_tol=TOL_COEFFS,
-                                    cons=cons, precomp=self.precomp)
-        else:
-            return qp.min_cost_B_qp(self.a_coeff, self.kappa, self.lambd, abs_tol=TOL_COEFFS,
-                                    cons=cons, precomp=self.precomp)
-
-    @staticmethod
-    def _build_qp_constraints(solve: int) -> dict:
-        return {'overbuying': CONS_OVERBUYING[solve],
-                'short_selling': CONS_SHORT_SELL[solve]
-                }
+    # def _minimize_cost_qp(self, solve):
+    #     # Precalculate matrices and vectors for the optimization
+    #     _ = qp.precalc_obj_func_constants(self.N, self._precomp)
+    # 
+    #     if solve == TRADER_A:
+    #         return qp.min_cost_A_qp(self.b_coeff, self.rho, self.lambd, abs_tol=TOL_COEFFS,
+    #                                 precomp=self._precomp)
+    #     else:
+    #         return qp.min_cost_B_qp(self.a_coeff, self.rho, self.lambd, abs_tol=TOL_COEFFS,
+    #                                 precomp=self._precomp)
 
     def check_v_theo(self, iter_hist: List["State"], ax: Any) -> Dict[str, Any]:
         """Check the solution against theoretical values.
@@ -317,7 +255,7 @@ class State:
         ax.plot(t_values, b_approx, label=r"$b^*_{\lambda}(t)$", color="blue", linestyle="-")
         n_iter = len(iter_hist) // 2
         ax.set_title("Theoretical and approximated trading strategies\n" +
-                     r"$\kappa$" + f"={self.kappa}, " + r"$\lambda$" + f"={self.lambd}, " +
+                     r"$\rho$" + f"={self.rho}, " + r"$\lambda$" + f"={self.lambd}, " +
                      f"N={self.N}, " + r'$\gamma=$' + f'{self.gamma:.1f} :: ' +
                      f'{n_iter} solver iterations\n' +
                      r"$L_2(a_{diff})=$" + f"{l2_a:.4f}, " +
@@ -432,8 +370,8 @@ class State:
         """
         # Calculate theoretical equilibrium estimates
         a_coeff_theo, b_coeff_theo = self._find_theo_fourier_coeffs()
-        a_cost_theo = ca.cost_fn_a_approx(a_coeff_theo, b_coeff_theo, self.kappa, self.lambd)
-        b_cost_theo = ca.cost_fn_b_approx(a_coeff_theo, b_coeff_theo, self.kappa, self.lambd)
+        a_cost_theo = pp.cost_fn_prop_a_approx(a_coeff_theo, b_coeff_theo, self.lambd, self.rho)
+        b_cost_theo = pp.cost_fn_prop_b_approx(a_coeff_theo, b_coeff_theo, self.lambd, self.rho)
 
         # We are interested in abs differences between approximated and theo costs
         a_res = [abs(i.a_cost - a_cost_theo) for i in iter_hist]
@@ -471,17 +409,17 @@ class State:
         return iter_idx
 
     def plot_results(self, iter_hist: List["State"]) -> dict:
-        fig, axs = plt.subplots(2, 2, figsize=(10, 10))
+        fig, axs = plt.subplots(2, 1, figsize=(10, 10))
         if INCLUDE_SUPTITLE:
             plt.suptitle("Two-Trader Equilibrium Strategies, " +
-                         r"$\kappa$" + f"={self.kappa}, " + r"$\lambda$" + f"={self.lambd}\n" +
+                         r"$\rho$" + f"={self.rho}, " + r"$\lambda$" + f"={self.lambd}\n" +
                          f"{self.N} Fourier terms, " +
                          f"{len(iter_hist) // 2} solver iterations", fontsize=16)
-        stats = self.check_v_theo(iter_hist, axs[0, 0])
+        stats = self.check_v_theo(iter_hist, axs[0])
         print(f"\nAccuracy: L2(a) = {stats['L2_a']:.5f}, L2(b) = {stats['L2_b']:.5f}")
-        self.plot_state_space(iter_hist, axs[1, 0])
-        self.plot_func_convergence(iter_hist, stats, axs[0, 1])
-        self.plot_state_space_v_theo(iter_hist, stats, axs[1, 1])
+        self.plot_state_space(iter_hist, axs[1])
+        # self.plot_func_convergence(iter_hist, stats, axs[0, 1])
+        # self.plot_state_space_v_theo(iter_hist, stats, axs[1, 1])
         plt.tight_layout(rect=(0., 0.01, 1., 0.97))
         plt.show()
         return stats
@@ -491,8 +429,8 @@ def pickle_file_path(make_dirs: bool = False):
     # Define the directory and filename
     results_dir = os.path.join(CURRENT_DIR, cfg.SIM_RESULTS_DIR)
     # timestamp = datetime.now().strftime('%Y%m%d-%H%M')
-    filename = cfg.SIM_CONS_FILE_NAME.format(
-        LAMBD=LAMBD, KAPPA=KAPPA, N=N, CONSTRAINTS=CONS_SUFFIX)
+    filename = cfg.SIM_FILE_NAME.format(
+        LAMBD=LAMBD, RHO=RHO, KAPPA=KAPPA, N=N, SUFFIX=DATA_FILE_SUFFIX)
     file_path = os.path.join(results_dir, filename)
 
     # Create the directory if it does not exist
@@ -526,9 +464,9 @@ def load_pickled_results() -> Any:
 
 def main():
     # Initialize state
-    state = State(N=N, kappa=KAPPA, lambd=LAMBD, gamma=GAMMA)
+    state = State(N=N, rho=RHO, lambd=LAMBD, gamma=GAMMA, kappa=KAPPA)
     print("\nStarting Optimizatin, Solver = " +
-          f"{'QP' if SOLVER == QP else 'SCIPY'}\n" +
+          f"{'QP' if SOLVER == 'QP' else 'SCIPY'}\n" +
           "Initial State: ")
     print(state)
 
@@ -549,7 +487,7 @@ def main():
         if state.within_tol(iter_hist[-3]):
             converged_flag = True
             break
-        elif len(iter_hist) > MAX_ITER * 2 + 1:
+        elif len(iter_hist) >= MAX_ITER * 2 + 1:
             print(f"\nMax Iteration {MAX_ITER} exceeded!")
             break
         elif max_abs_cost := max(abs(state.a_cost), abs(state.b_cost)) > MAX_ABS_COST:
@@ -568,8 +506,7 @@ def main():
 
     # Save results
     if SAVE_RESULTS:
-        save_pickled_results({'state': state, 'iter_hist': iter_hist, 'stats': sim_stats,
-                              'constraints': {'overbuying': CONS_OVERBUYING, 'short_sell': CONS_SHORT_SELL}})
+        save_pickled_results({'state': state, 'iter_hist': iter_hist, 'stats': sim_stats})
 
 
 if __name__ == "__main__":

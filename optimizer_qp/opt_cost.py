@@ -16,7 +16,7 @@ sys.path.append(os.path.abspath(os.path.join(current_dir, '..', 'cost_function')
 import fourier as fr
 from cost_function_approx import cost_fn_a_approx
 import qp_solvers as qp
-import trading_funcs_qp as tf
+import trading_funcs as tf
 
 # Global Parameters
 N = 50  # number of Fourier terms
