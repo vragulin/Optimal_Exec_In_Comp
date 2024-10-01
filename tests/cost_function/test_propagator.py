@@ -204,6 +204,28 @@ def test_approx_both_terms(rho):
 
 
 @pt.mark.parametrize("rho", [0.1, 1, 10])  # 0.1, 1.0, 5.0])
+def test_approx_both_terms_precomp(rho):
+    a_n = np.array([1., 0.25])
+    b_n = np.array([-1., 1.0])
+    lambd = 1
+    t = 0.5
+    exp, sin, cos, pi = np.exp, np.sin, np.cos, np.pi
+    tpi = (2 * pi)
+    # Precompute the trigonometric functions
+    n = np.arange(1,3)
+    sin_n_pi_t = sin(n * pi * t)
+    cos_n_pi_t = cos(n * pi * t)
+    precomp = {'sin_n_pi_t': sin_n_pi_t, 'cos_n_pi_t': cos_n_pi_t}
+    actual = pp.prop_price_impact_approx(t, a_n, b_n, lambd, rho, precomp=precomp)
+    expected = (1 - exp(-rho * t)) * (1 + lambd) / rho \
+               + (a_n[1] + b_n[1] * lambd) * tpi \
+               * (rho * cos(tpi * t) + tpi * sin(tpi * t) - rho * exp(-rho * t)) \
+               / (rho ** 2 + tpi ** 2)
+
+    assert pt.approx(actual, abs=1e-6) == expected
+
+
+@pt.mark.parametrize("rho", [0.1, 1, 10])  # 0.1, 1.0, 5.0])
 def test_approx_analytic_func(rho):
     """ Specify analytic funcs for a and b """
     def a_func(t, kappa, lambd):
