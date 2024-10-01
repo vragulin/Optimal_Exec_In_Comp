@@ -14,6 +14,8 @@ The theoretical framework is based on the Chriss(2024) series of papers. The mai
 
 [2] Position-Building in Competition with Real-World Constraints: https://arxiv.org/abs/2409.15459
 
+[3] Position-Building in Competition with Realistic Transactions Costs:  (TBA)
+
 
 ## Table of Contents
 
