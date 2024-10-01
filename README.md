@@ -90,6 +90,7 @@ Alternatively, your own bespoke trading strategy can be defined via a callback f
 
 - `optimizer_paper/`: Main scripts used to solve trading strategy optimizations and generate plots for the Chriss(2024) papers.
 - `optimizer_qp/`: Faster optimziation scripts using the QP solver.
+- `lin_propagator/`: Linear Propagator model scripts (best response, etc.)
 - `cost_function/`: Modules for calculating trading costs in competitive settings.
 - `fourier/`: Directory containing helper functions for approximating trading trajectories with Fourier and Sine Series.
 - `results/`: Directory containing simulation results.
