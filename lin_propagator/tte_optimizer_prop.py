@@ -29,7 +29,7 @@ KAPPA = 10  # Parameter for the equilibrium strategy benchmark (permanent impact
 
 TOL_COEFFS = 1e-4
 TOL_COSTS = TOL_COEFFS
-MAX_ITER = 2
+MAX_ITER = 3
 MAX_ABS_COST = 1e10
 N_PLOT_POINTS = 100
 N_ITER_LINES = 4
