@@ -15,7 +15,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.abspath(os.path.join(current_dir, '..', 'cost_function')))
 sys.path.append(os.path.abspath(os.path.join(current_dir, '..', 'optimizer_qp')))
 import fourier as fr
-from propagator import cost_fn_prop_a_approx, prop_price_impact_approx
+from propagator import cost_fn_prop_a_approx, cost_fn_prop_b_approx, prop_price_impact_approx
 import trading_funcs as tf
 
 # Global Parameters
@@ -35,11 +35,15 @@ N_PLOT_POINTS = 100  # number of points for plotting
 np.random.seed(12)
 DECAY = 0.15  # decay of the Fourier coefficients for the random coefficient test
 
+# For whcih trader to optimize
+USE_TRADER_B_COST_FUNC = False  # This is mostly used for testing
+
 
 class CostFunction:
     def __init__(self, **kwargs):
         self.rho = kwargs.get('rho', 0)
         self.lambd = kwargs.get('lambd', 1)
+        self.use_trader_B_cost_fn = kwargs.get('use_trader_B_fn', False)
 
         # The trajectory of an adversary can be specified
         # as a function of time or by it Fourier coefficients
@@ -59,6 +63,8 @@ class CostFunction:
         if self._b_coeffs is None and self.b_func is None:
             raise ValueError("Either b_coeffs or b_func must be provided")
 
+        self.a_coeffs = kwargs.get('a_coeffs')  # Mostly used for testing when we want to solve for B
+
     @property
     def b_coeffs(self) -> np.ndarray:
         if self._b_coeffs is None:
@@ -72,8 +78,11 @@ class CostFunction:
     def N(self) -> int:
         return self._N
 
-    def compute(self, a_coeffs):
-        return cost_fn_prop_a_approx(a_coeffs, self.b_coeffs, self.lambd, self.rho)
+    def compute(self, coeffs):
+        if self.use_trader_B_cost_fn:
+            return cost_fn_prop_b_approx(self.a_coeffs, coeffs, self.lambd, self.rho)
+        else:
+            return cost_fn_prop_a_approx(coeffs, self.b_coeffs, self.lambd, self.rho)
 
     def __str__(self):
         s = "Cost Function: \n"
@@ -128,17 +137,17 @@ class CostFunction:
         plt.tight_layout(rect=(0., 0.01, 1., 0.97))
         plt.show()
 
-
-def solve_min_cost(c: CostFunction, init_guess: np.ndarray) -> Tuple[np.ndarray, Any]:
-    """ Solve for the optimal cost function using the solver specified """
-    if APPROX_SOLVER == SCIPY:
-        print("Using SciPy solver")
-        res = minimize(c.compute, init_guess)
-        return res.x, res
-    elif APPROX_SOLVER == QP:
-        raise NotImplementedError("Quadratic programming solver not yet implemented")
-    else:
-        raise ValueError("Unknown solver")
+    def solve_min_cost(self, init_guess: np.ndarray, **kwargs) -> Tuple[np.ndarray, Any]:
+        """ Solve for the optimal cost function using the solver specified """
+        solver = kwargs.get('solver', SCIPY)
+        if solver == SCIPY:
+            print("Using SciPy solver")
+            res = minimize(self.compute, init_guess)
+            return res.x, res
+        elif solver == QP:
+            raise NotImplementedError("Quadratic programming solver not yet implemented")
+        else:
+            raise ValueError("Unknown solver")
 
 
 def main():
@@ -174,7 +183,7 @@ def main():
 
     # Minimize the cost function
     start = time.time()
-    a_coeffs_opt, res = solve_min_cost(c, initial_guess)
+    a_coeffs_opt, res = c.solve_min_cost(initial_guess, solver=APPROX_SOLVER)
     print(f"optimization time = {(time.time() - start):.4f}s")
 
     # Compute the cost with optimized coefficients
