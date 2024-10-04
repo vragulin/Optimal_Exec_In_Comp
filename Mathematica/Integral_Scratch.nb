@@ -10,17 +10,1569 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       154,          7]
-NotebookDataLength[       839,         34]
-NotebookOptionsPosition[       557,         21]
-NotebookOutlinePosition[       975,         37]
-CellTagsIndexPosition[       932,         34]
+NotebookDataLength[     73073,       1655]
+NotebookOptionsPosition[     68644,       1571]
+NotebookOutlinePosition[     69123,       1589]
+CellTagsIndexPosition[     69080,       1586]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
 Notebook[{
+
+Cell[CellGroupData[{
+Cell["Integration Scratch book", "Subsubsection",
+ CellChangeTimes->{{3.9367643749945335`*^9, 3.9367643790668335`*^9}, 
+   3.936764413002281*^9},ExpressionUUID->"5f67b426-e98e-be4c-ae5d-\
+5650d0684377"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"aPrime", "[", "t_", "]"}], ":=", 
+  RowBox[{"1", "+", " ", 
+   RowBox[{"Pi", " ", "*", " ", 
+    RowBox[{"Cos", "[", 
+     RowBox[{"Pi", "*", "t"}], "]"}]}]}]}], "\n", 
+ RowBox[{
+  RowBox[{"P", "[", "t_", "]"}], ":=", 
+  RowBox[{
+   RowBox[{"11", "*", 
+    RowBox[{"(", 
+     RowBox[{"1", "-", 
+      RowBox[{"Exp", "[", 
+       RowBox[{"-", "t"}], "]"}]}], ")"}]}], "+", 
+   RowBox[{
+    RowBox[{"Pi", "/", 
+     RowBox[{"(", 
+      RowBox[{"1", "+", 
+       RowBox[{"Pi", "^", "2"}]}], ")"}]}], "*", 
+    RowBox[{"(", 
+     RowBox[{
+      RowBox[{"Cos", "[", 
+       RowBox[{"Pi", "*", "t"}], "]"}], "+", 
+      RowBox[{"Pi", "*", 
+       RowBox[{"Sin", "[", 
+        RowBox[{"Pi", "*", "t"}], "]"}]}], "-", 
+      RowBox[{"Exp", "[", 
+       RowBox[{"-", "t"}], "]"}]}], ")"}]}]}]}], "\n"}], "Input",
+ CellChangeTimes->{{3.936764387130146*^9, 3.93676439576956*^9}},
+ CellLabel->
+  "In[360]:=",ExpressionUUID->"0ec2b027-19b9-4543-8109-290b124b695e"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{"integral", "=", 
+  RowBox[{"Integrate", "[", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"aPrime", "[", "t", "]"}], "*", 
+     RowBox[{"P", "[", "t", "]"}]}], ",", 
+    RowBox[{"{", 
+     RowBox[{"t", ",", "0", ",", "1"}], "}"}]}], "]"}]}], "\n", 
+ RowBox[{"N", "[", "integral", "]"}], "\[IndentingNewLine]"}], "Input",
+ CellChangeTimes->{{3.936764429986025*^9, 3.936764429987028*^9}, {
+  3.936766004846281*^9, 3.9367660087203465`*^9}},
+ CellLabel->
+  "In[376]:=",ExpressionUUID->"583432b8-e6b0-f34c-a68a-3ff9f76ea590"],
+
+Cell[BoxData[
+ FractionBox[
+  RowBox[{"22", "-", 
+   RowBox[{"20", " ", 
+    RowBox[{"(", 
+     RowBox[{"1", "+", "\[ExponentialE]"}], ")"}], " ", "\[Pi]"}], "-", 
+   RowBox[{
+    RowBox[{"(", 
+     RowBox[{
+      RowBox[{"-", "42"}], "+", "\[ExponentialE]"}], ")"}], " ", 
+    SuperscriptBox["\[Pi]", "2"]}], "-", 
+   RowBox[{"20", " ", 
+    RowBox[{"(", 
+     RowBox[{"1", "+", "\[ExponentialE]"}], ")"}], " ", 
+    SuperscriptBox["\[Pi]", "3"]}], "+", 
+   RowBox[{
+    RowBox[{"(", 
+     RowBox[{"22", "+", "\[ExponentialE]"}], ")"}], " ", 
+    SuperscriptBox["\[Pi]", "4"]}]}], 
+  RowBox[{"2", " ", "\[ExponentialE]", " ", 
+   SuperscriptBox[
+    RowBox[{"(", 
+     RowBox[{"1", "+", 
+      SuperscriptBox["\[Pi]", "2"]}], ")"}], "2"]}]]], "Output",
+ CellChangeTimes->{3.9367644363468285`*^9, 3.936766012533737*^9},
+ CellLabel->
+  "Out[376]=",ExpressionUUID->"0336877c-6c94-2247-b91a-6053064c8eba"],
+
+Cell[BoxData["0.43288706083240874`"], "Output",
+ CellChangeTimes->{3.9367644363468285`*^9, 3.9367660125377064`*^9},
+ CellLabel->
+  "Out[377]=",ExpressionUUID->"307a484c-c848-4d4c-8bf5-b158f11bc35c"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["integral", "WolframAlphaLong",
+ CellLabel->
+  "In[363]:=",ExpressionUUID->"62afc365-37f1-8f4d-92c4-00734b50619c"],
+
+Cell[BoxData[
+ NamespaceBox["WolframAlphaQueryResults",
+  DynamicModuleBox[{Typeset`q$$ = "integral", Typeset`opts$$ = {
+   AppearanceElements -> {
+     "Warnings", "Assumptions", "Brand", "Pods", "PodMenus", "Unsuccessful", 
+      "Sources"}, Asynchronous -> All, 
+    InputAssumptions -> {
+     "{\"F\", \"Integral\", \"integrand\"} -> \"(1+ Pi * Cos[Pi*t]) * \
+(11*(1-Exp[-t])+Pi/(1+Pi^2)*(Cos[Pi*t]+Pi*Sin[Pi*t]-Exp[-t]))\""}, 
+    TimeConstraint -> {20, Automatic, Automatic, Automatic}, 
+    Method -> {
+     "Formats" -> {"cell", "minput", "msound", "dataformats"}, "Server" -> 
+      "https://api.wolframalpha.com/v1/"}}, Typeset`elements$$ = {
+   "Warnings", "Assumptions", "Brand", "Pods", "PodMenus", "Unsuccessful", 
+    "Sources"}, Typeset`pod1$$ = XMLElement[
+   "pod", {"title" -> "Indefinite integral", "scanner" -> "Integral", "id" -> 
+     "IndefiniteIntegral", "position" -> "100", "error" -> "false", 
+     "numsubpods" -> "1", "primary" -> "true"}, {
+     XMLElement["subpod", {"title" -> ""}, {
+       XMLElement[
+       "minput", {}, {
+        "Integrate[(1 + Pi Cos[Pi t]) (11 (1 - Exp[-t]) + (Pi/(1 + Pi^2)) \
+(Cos[Pi t] + Pi Sin[Pi t] - Exp[-t])), x]"}], 
+       XMLElement["cell", {"compressed" -> True, "string" -> False}, {
+         Cell[
+          BoxData[
+           FormBox[
+            RowBox[{
+              TagBox[
+               RowBox[{"\[Integral]", 
+                 RowBox[{
+                   TagBox[
+                    TagBox[
+                    RowBox[{
+                    RowBox[{"(", 
+                    RowBox[{"1", "+", 
+                    RowBox[{"\[Pi]", " ", 
+                    RowBox[{"cos", "(", 
+                    RowBox[{"\[Pi]", " ", "t"}], ")"}]}]}], ")"}], " ", 
+                    RowBox[{"(", 
+                    RowBox[{
+                    RowBox[{"11", " ", 
+                    RowBox[{"(", 
+                    RowBox[{"1", "-", 
+                    RowBox[{"exp", "(", 
+                    RowBox[{"-", "t"}], ")"}]}], ")"}]}], "+", 
+                    FractionBox[
+                    RowBox[{"\[Pi]", " ", 
+                    RowBox[{"(", 
+                    RowBox[{
+                    RowBox[{"cos", "(", 
+                    RowBox[{"\[Pi]", " ", "t"}], ")"}], "+", 
+                    RowBox[{"\[Pi]", " ", 
+                    RowBox[{"sin", "(", 
+                    RowBox[{"\[Pi]", " ", "t"}], ")"}]}], "-", 
+                    RowBox[{"exp", "(", 
+                    RowBox[{"-", "t"}], ")"}]}], ")"}]}], 
+                    RowBox[{"1", "+", 
+                    SuperscriptBox["\[Pi]", "2"]}]]}], ")"}]}], Identity], 
+                    PrecedenceForm[#, 400.]& ], 
+                   RowBox[{"\[DifferentialD]", "x"}]}]}], HoldForm], 
+              "\[LongEqual]", 
+              TagBox[
+               StyleBox[
+                RowBox[{
+                  StyleBox[
+                   RowBox[{
+                    RowBox[{"11", " ", 
+                    RowBox[{"(", 
+                    RowBox[{"1", "-", 
+                    SuperscriptBox["\[ExponentialE]", 
+                    RowBox[{"-", "t"}]]}], ")"}], " ", "x"}], "+", 
+                    RowBox[{"11", " ", "\[Pi]", " ", 
+                    RowBox[{"(", 
+                    RowBox[{"1", "-", 
+                    SuperscriptBox["\[ExponentialE]", 
+                    RowBox[{"-", "t"}]]}], ")"}], " ", "x", " ", 
+                    RowBox[{"cos", "(", 
+                    RowBox[{"\[Pi]", " ", "t"}], ")"}]}], "+", 
+                    FractionBox[
+                    RowBox[{
+                    SuperscriptBox["\[Pi]", "2"], " ", "x", " ", 
+                    RowBox[{"cos", "(", 
+                    RowBox[{"\[Pi]", " ", "t"}], ")"}], " ", 
+                    RowBox[{"(", 
+                    RowBox[{
+                    RowBox[{"-", 
+                    SuperscriptBox["\[ExponentialE]", 
+                    RowBox[{"-", "t"}]]}], "+", 
+                    RowBox[{"\[Pi]", " ", 
+                    RowBox[{"sin", "(", 
+                    RowBox[{"\[Pi]", " ", "t"}], ")"}]}], "+", 
+                    RowBox[{"cos", "(", 
+                    RowBox[{"\[Pi]", " ", "t"}], ")"}]}], ")"}]}], 
+                    RowBox[{"1", "+", 
+                    SuperscriptBox["\[Pi]", "2"]}]], "+", 
+                    FractionBox[
+                    RowBox[{"\[Pi]", " ", "x", " ", 
+                    RowBox[{"(", 
+                    RowBox[{
+                    RowBox[{"-", 
+                    SuperscriptBox["\[ExponentialE]", 
+                    RowBox[{"-", "t"}]]}], "+", 
+                    RowBox[{"\[Pi]", " ", 
+                    RowBox[{"sin", "(", 
+                    RowBox[{"\[Pi]", " ", "t"}], ")"}]}], "+", 
+                    RowBox[{"cos", "(", 
+                    RowBox[{"\[Pi]", " ", "t"}], ")"}]}], ")"}]}], 
+                    RowBox[{"1", "+", 
+                    SuperscriptBox["\[Pi]", "2"]}]]}], {
+                    GrayLevel[0], LinebreakAdjustments -> {1, 100, 1, 0, 100},
+                     LineIndent -> 0}], "+", 
+                  StyleBox[
+                  "\"constant\"", {
+                   Magnification -> 0.9 Inherited, FontSize -> Inherited, 
+                    FontFamily -> "Roboto", 
+                    LinebreakAdjustments -> {1, 100, 1, 0, 100}, LineIndent -> 
+                    0}]}], {
+                 GrayLevel[0.6], LinebreakAdjustments -> {1, 100, 1, 0, 100}, 
+                 LineIndent -> 0}], Identity]}], TraditionalForm]], 
+          "Output", {
+          Background -> None, 
+           GraphicsBoxOptions -> {
+            DefaultBaseStyle -> {"Graphics", FontFamily -> "Times"}, 
+             DefaultTicksStyle -> 
+             Directive[
+              FontFamily -> "Times", FontSize -> 10, "GraphicsTicks"], 
+             DefaultFrameTicksStyle -> 
+             Directive[
+              FontFamily -> "Times", FontSize -> 10, "GraphicsFrameTicks"], 
+             DefaultFrameStyle -> Directive[
+               GrayLevel[0, 0.35], FontColor -> GrayLevel[0.25], FontOpacity -> 
+               1, "GraphicsFrame"], DefaultAxesStyle -> Directive[
+               GrayLevel[0, 0.35], FontColor -> GrayLevel[0.25], FontOpacity -> 
+               1, "GraphicsAxes"]}, 
+           Graphics3DBoxOptions -> {
+            DefaultBaseStyle -> {FontFamily -> "Times", "Graphics3D"}}}, 
+          NumberPoint -> ".", CellSize -> {550, Automatic}, 
+          AutoStyleOptions -> {"HighlightFormattingErrors" -> False}, 
+          RenderingOptions -> {
+           "3DRenderingMethod" -> "BSPTreeOrDepthBuffer"}]}], 
+       XMLElement[
+       "dataformats", {}, {
+        "plaintext,minput,moutput,computabledata,formatteddata,formuladata"}]}\
+], 
+     XMLElement["expressiontypes", {"count" -> "1"}, {"\n   ", 
+       XMLElement["expressiontype", {"name" -> "Default"}, {}], "\n  "}], 
+     XMLElement["states", {"count" -> "2"}, {
+       XMLElement[
+       "state", {
+        "name" -> "Approximate form", "input" -> 
+         "IndefiniteIntegral__Approximate form"}, {}], 
+       XMLElement[
+       "state", {
+        "name" -> "Step-by-step solution", "input" -> 
+         "IndefiniteIntegral__Step-by-step solution", "stepbystep" -> "true", 
+         "buttonstyle" -> "StepByStepSolution"}, {}]}]}], Typeset`pod2$$ = 
+   XMLElement[
+   "pod", {"title" -> "Alternate forms of the integral", "scanner" -> 
+     "Integral", "id" -> "AlternateFormOfTheIntegral", "position" -> "200", 
+     "error" -> "false", "numsubpods" -> "3"}, {
+     XMLElement["subpod", {"title" -> ""}, {
+       XMLElement[
+       "minput", {}, {
+        "FullSimplify[11 (1 - E^(-t)) x + 11 (1 - E^(-t)) Pi x Cos[Pi t] + \
+(Pi x (-E^(-t) + Cos[Pi t] + Pi Sin[Pi t]))/(1 + Pi^2) + (Pi^2 x Cos[Pi t] \
+(-E^(-t) + Cos[Pi t] + Pi Sin[Pi t]))/(1 + Pi^2)]"}], 
+       XMLElement["cell", {"compressed" -> False, "string" -> True}, {
+         Cell[
+          BoxData[
+           FormBox[
+            TagBox[
+             StyleBox[
+              RowBox[{
+                StyleBox[
+                 FractionBox[
+                  RowBox[{
+                    SuperscriptBox["\[ExponentialE]", 
+                    RowBox[{"-", "t"}]], " ", "x", " ", 
+                    RowBox[{"(", 
+                    RowBox[{
+                    RowBox[{"\[Pi]", " ", 
+                    RowBox[{"cos", "(", 
+                    RowBox[{"\[Pi]", " ", "t"}], ")"}]}], "+", "1"}], ")"}], 
+                    " ", 
+                    RowBox[{"(", 
+                    RowBox[{
+                    RowBox[{
+                    SuperscriptBox["\[ExponentialE]", "t"], " ", 
+                    RowBox[{"(", 
+                    RowBox[{
+                    RowBox[{"\[Pi]", " ", 
+                    RowBox[{"(", 
+                    RowBox[{
+                    RowBox[{"\[Pi]", " ", 
+                    RowBox[{"sin", "(", 
+                    RowBox[{"\[Pi]", " ", "t"}], ")"}]}], "+", 
+                    RowBox[{"cos", "(", 
+                    RowBox[{"\[Pi]", " ", "t"}], ")"}]}], ")"}]}], "+", 
+                    RowBox[{"11", " ", 
+                    RowBox[{"(", 
+                    RowBox[{"1", "+", 
+                    SuperscriptBox["\[Pi]", "2"]}], ")"}]}]}], ")"}]}], "-", 
+                    RowBox[{"11", " ", 
+                    SuperscriptBox["\[Pi]", "2"]}], "-", "\[Pi]", "-", "11"}],
+                     ")"}]}], 
+                  RowBox[{"1", "+", 
+                    SuperscriptBox["\[Pi]", "2"]}]], {
+                  GrayLevel[0], LinebreakAdjustments -> {1, 100, 1, 0, 100}, 
+                  LineIndent -> 0}], "+", 
+                StyleBox[
+                "\"constant\"", {
+                 Magnification -> 0.9 Inherited, FontSize -> Inherited, 
+                  FontFamily -> "Roboto", 
+                  LinebreakAdjustments -> {1, 100, 1, 0, 100}, LineIndent -> 
+                  0}]}], {
+               GrayLevel[0.6], LinebreakAdjustments -> {1, 100, 1, 0, 100}, 
+               LineIndent -> 0}], Identity], TraditionalForm]], "Output", {
+          Background -> None, 
+           GraphicsBoxOptions -> {
+            DefaultBaseStyle -> {"Graphics", FontFamily -> "Times"}, 
+             DefaultTicksStyle -> 
+             Directive[
+              FontFamily -> "Times", FontSize -> 10, "GraphicsTicks"], 
+             DefaultFrameTicksStyle -> 
+             Directive[
+              FontFamily -> "Times", FontSize -> 10, "GraphicsFrameTicks"], 
+             DefaultFrameStyle -> Directive[
+               GrayLevel[0, 0.35], FontColor -> GrayLevel[0.25], FontOpacity -> 
+               1, "GraphicsFrame"], DefaultAxesStyle -> Directive[
+               GrayLevel[0, 0.35], FontColor -> GrayLevel[0.25], FontOpacity -> 
+               1, "GraphicsAxes"]}, 
+           Graphics3DBoxOptions -> {
+            DefaultBaseStyle -> {FontFamily -> "Times", "Graphics3D"}}}, 
+          NumberPoint -> ".", CellSize -> {550, Automatic}, 
+          AutoStyleOptions -> {"HighlightFormattingErrors" -> False}, 
+          RenderingOptions -> {
+           "3DRenderingMethod" -> "BSPTreeOrDepthBuffer"}]}], 
+       XMLElement[
+       "dataformats", {}, {
+        "plaintext,minput,moutput,computabledata,formatteddata"}]}], 
+     XMLElement["subpod", {"title" -> ""}, {
+       XMLElement[
+       "minput", {}, {
+        "Factor[11 (1 - E^(-t)) x + 11 (1 - E^(-t)) Pi x Cos[Pi t] + (Pi x \
+(-E^(-t) + Cos[Pi t] + Pi Sin[Pi t]))/(1 + Pi^2) + (Pi^2 x Cos[Pi t] (-E^(-t) \
++ Cos[Pi t] + Pi Sin[Pi t]))/(1 + Pi^2)]"}], 
+       XMLElement["cell", {"compressed" -> False, "string" -> True}, {
+         Cell[
+          BoxData[
+           FormBox[
+            TagBox[
+             StyleBox[
+              RowBox[{
+                StyleBox[
+                 FractionBox[
+                  RowBox[{
+                    SuperscriptBox["\[ExponentialE]", 
+                    RowBox[{"-", "t"}]], " ", "x", " ", 
+                    RowBox[{"(", 
+                    RowBox[{
+                    RowBox[{"\[Pi]", " ", 
+                    RowBox[{"cos", "(", 
+                    RowBox[{"\[Pi]", " ", "t"}], ")"}]}], "+", "1"}], ")"}], 
+                    " ", 
+                    RowBox[{"(", 
+                    RowBox[{
+                    RowBox[{"11", " ", 
+                    SuperscriptBox["\[ExponentialE]", "t"]}], "+", 
+                    RowBox[{"11", " ", 
+                    SuperscriptBox["\[Pi]", "2"], " ", 
+                    SuperscriptBox["\[ExponentialE]", "t"]}], "+", 
+                    RowBox[{
+                    SuperscriptBox["\[Pi]", "2"], " ", 
+                    SuperscriptBox["\[ExponentialE]", "t"], " ", 
+                    RowBox[{"sin", "(", 
+                    RowBox[{"\[Pi]", " ", "t"}], ")"}]}], "+", 
+                    RowBox[{"\[Pi]", " ", 
+                    SuperscriptBox["\[ExponentialE]", "t"], " ", 
+                    RowBox[{"cos", "(", 
+                    RowBox[{"\[Pi]", " ", "t"}], ")"}]}], "-", 
+                    RowBox[{"11", " ", 
+                    SuperscriptBox["\[Pi]", "2"]}], "-", "\[Pi]", "-", "11"}],
+                     ")"}]}], 
+                  RowBox[{"1", "+", 
+                    SuperscriptBox["\[Pi]", "2"]}]], {
+                  GrayLevel[0], LinebreakAdjustments -> {1, 100, 1, 0, 100}, 
+                  LineIndent -> 0}], "+", 
+                StyleBox[
+                "\"constant\"", {
+                 Magnification -> 0.9 Inherited, FontSize -> Inherited, 
+                  FontFamily -> "Roboto", 
+                  LinebreakAdjustments -> {1, 100, 1, 0, 100}, LineIndent -> 
+                  0}]}], {
+               GrayLevel[0.6], LinebreakAdjustments -> {1, 100, 1, 0, 100}, 
+               LineIndent -> 0}], Identity], TraditionalForm]], "Output", {
+          Background -> None, 
+           GraphicsBoxOptions -> {
+            DefaultBaseStyle -> {"Graphics", FontFamily -> "Times"}, 
+             DefaultTicksStyle -> 
+             Directive[
+              FontFamily -> "Times", FontSize -> 10, "GraphicsTicks"], 
+             DefaultFrameTicksStyle -> 
+             Directive[
+              FontFamily -> "Times", FontSize -> 10, "GraphicsFrameTicks"], 
+             DefaultFrameStyle -> Directive[
+               GrayLevel[0, 0.35], FontColor -> GrayLevel[0.25], FontOpacity -> 
+               1, "GraphicsFrame"], DefaultAxesStyle -> Directive[
+               GrayLevel[0, 0.35], FontColor -> GrayLevel[0.25], FontOpacity -> 
+               1, "GraphicsAxes"]}, 
+           Graphics3DBoxOptions -> {
+            DefaultBaseStyle -> {FontFamily -> "Times", "Graphics3D"}}}, 
+          NumberPoint -> ".", CellSize -> {550, Automatic}, 
+          AutoStyleOptions -> {"HighlightFormattingErrors" -> False}, 
+          RenderingOptions -> {
+           "3DRenderingMethod" -> "BSPTreeOrDepthBuffer"}]}], 
+       XMLElement[
+       "dataformats", {}, {
+        "plaintext,minput,moutput,computabledata,formatteddata"}]}], 
+     XMLElement["subpod", {"title" -> ""}, {
+       XMLElement[
+       "minput", {}, {
+        "TrigFactor[11 (1 - E^(-t)) x + 11 (1 - E^(-t)) Pi x Cos[Pi t] + (Pi \
+x (-E^(-t) + Cos[Pi t] + Pi Sin[Pi t]))/(1 + Pi^2) + (Pi^2 x Cos[Pi t] \
+(-E^(-t) + Cos[Pi t] + Pi Sin[Pi t]))/(1 + Pi^2)]"}], 
+       XMLElement["cell", {"compressed" -> False, "string" -> True}, {
+         Cell[
+          BoxData[
+           FormBox[
+            TagBox[
+             StyleBox[
+              RowBox[{
+                StyleBox[
+                 FractionBox[
+                  RowBox[{
+                    SuperscriptBox["\[ExponentialE]", 
+                    RowBox[{"-", "t"}]], " ", "x", " ", 
+                    RowBox[{"(", 
+                    RowBox[{
+                    RowBox[{"\[Pi]", " ", 
+                    RowBox[{"cos", "(", 
+                    RowBox[{"\[Pi]", " ", "t"}], ")"}]}], "+", "1"}], ")"}], 
+                    " ", 
+                    RowBox[{"(", 
+                    RowBox[{
+                    RowBox[{"11", " ", 
+                    SuperscriptBox["\[ExponentialE]", "t"]}], "+", 
+                    RowBox[{"11", " ", 
+                    SuperscriptBox["\[Pi]", "2"], " ", 
+                    SuperscriptBox["\[ExponentialE]", "t"]}], "+", 
+                    RowBox[{
+                    SuperscriptBox["\[Pi]", "2"], " ", 
+                    SuperscriptBox["\[ExponentialE]", "t"], " ", 
+                    RowBox[{"sin", "(", 
+                    RowBox[{"\[Pi]", " ", "t"}], ")"}]}], "+", 
+                    RowBox[{"\[Pi]", " ", 
+                    SuperscriptBox["\[ExponentialE]", "t"], " ", 
+                    RowBox[{"cos", "(", 
+                    RowBox[{"\[Pi]", " ", "t"}], ")"}]}], "-", 
+                    RowBox[{"11", " ", 
+                    SuperscriptBox["\[Pi]", "2"]}], "-", "\[Pi]", "-", "11"}],
+                     ")"}]}], 
+                  RowBox[{
+                    RowBox[{"(", 
+                    RowBox[{"\[Pi]", "+", 
+                    TagBox[
+                    RowBox[{"-", "\[ImaginaryI]"}], HoldForm]}], ")"}], " ", 
+                    RowBox[{"(", 
+                    RowBox[{"\[Pi]", "+", 
+                    TagBox["\[ImaginaryI]", HoldForm]}], ")"}]}]], {
+                  GrayLevel[0], LinebreakAdjustments -> {1, 100, 1, 0, 100}, 
+                  LineIndent -> 0}], "+", 
+                StyleBox[
+                "\"constant\"", {
+                 Magnification -> 0.9 Inherited, FontSize -> Inherited, 
+                  FontFamily -> "Roboto", 
+                  LinebreakAdjustments -> {1, 100, 1, 0, 100}, LineIndent -> 
+                  0}]}], {
+               GrayLevel[0.6], LinebreakAdjustments -> {1, 100, 1, 0, 100}, 
+               LineIndent -> 0}], Identity], TraditionalForm]], "Output", {
+          Background -> None, 
+           GraphicsBoxOptions -> {
+            DefaultBaseStyle -> {"Graphics", FontFamily -> "Times"}, 
+             DefaultTicksStyle -> 
+             Directive[
+              FontFamily -> "Times", FontSize -> 10, "GraphicsTicks"], 
+             DefaultFrameTicksStyle -> 
+             Directive[
+              FontFamily -> "Times", FontSize -> 10, "GraphicsFrameTicks"], 
+             DefaultFrameStyle -> Directive[
+               GrayLevel[0, 0.35], FontColor -> GrayLevel[0.25], FontOpacity -> 
+               1, "GraphicsFrame"], DefaultAxesStyle -> Directive[
+               GrayLevel[0, 0.35], FontColor -> GrayLevel[0.25], FontOpacity -> 
+               1, "GraphicsAxes"]}, 
+           Graphics3DBoxOptions -> {
+            DefaultBaseStyle -> {FontFamily -> "Times", "Graphics3D"}}}, 
+          NumberPoint -> ".", CellSize -> {550, Automatic}, 
+          AutoStyleOptions -> {"HighlightFormattingErrors" -> False}, 
+          RenderingOptions -> {
+           "3DRenderingMethod" -> "BSPTreeOrDepthBuffer"}]}], 
+       XMLElement[
+       "dataformats", {}, {
+        "plaintext,minput,moutput,computabledata,formatteddata"}]}], 
+     XMLElement["expressiontypes", {"count" -> "3"}, {"\n   ", 
+       XMLElement["expressiontype", {"name" -> "Default"}, {}], "\n   ", 
+       XMLElement["expressiontype", {"name" -> "Default"}, {}], "\n   ", 
+       XMLElement["expressiontype", {"name" -> "Default"}, {}], "\n  "}], 
+     XMLElement["states", {"count" -> "1"}, {
+       XMLElement[
+       "state", {
+        "name" -> "More", "input" -> 
+         "AlternateFormOfTheIntegral__More"}, {}]}]}], Typeset`pod3$$ = 
+   XMLElement[
+   "pod", {"title" -> "Expanded trigonometric form", "scanner" -> "Integral", 
+     "id" -> "TrigExpand", "position" -> "300", "error" -> "false", 
+     "numsubpods" -> "1"}, {
+     XMLElement["subpod", {"title" -> ""}, {
+       XMLElement[
+       "minput", {}, {
+        "TrigExpand[11 (1 - E^(-t)) x + 11 (1 - E^(-t)) Pi x Cos[Pi t] + (Pi \
+x (-E^(-t) + Cos[Pi t] + Pi Sin[Pi t]))/(1 + Pi^2) + (Pi^2 x Cos[Pi t] \
+(-E^(-t) + Cos[Pi t] + Pi Sin[Pi t]))/(1 + Pi^2)]"}], 
+       XMLElement["cell", {"compressed" -> False, "string" -> True}, {
+         Cell[
+          BoxData[
+           FormBox[
+            StyleBox[
+             RowBox[{
+               StyleBox[
+                TagBox[
+                 RowBox[{
+                   FractionBox[
+                    RowBox[{
+                    SuperscriptBox["\[Pi]", "3"], " ", "x", " ", 
+                    RowBox[{"cos", "(", 
+                    RowBox[{"\[Pi]", " ", "t"}], ")"}], " ", 
+                    RowBox[{"sin", "(", 
+                    RowBox[{"\[Pi]", " ", "t"}], ")"}]}], 
+                    RowBox[{"1", "+", 
+                    SuperscriptBox["\[Pi]", "2"]}]], "+", 
+                   FractionBox[
+                    RowBox[{
+                    SuperscriptBox["\[Pi]", "2"], " ", "x", " ", 
+                    RowBox[{"sin", "(", 
+                    RowBox[{"\[Pi]", " ", "t"}], ")"}]}], 
+                    RowBox[{"1", "+", 
+                    SuperscriptBox["\[Pi]", "2"]}]], "-", 
+                   RowBox[{"11", " ", 
+                    SuperscriptBox["\[ExponentialE]", 
+                    RowBox[{"-", "t"}]], " ", "\[Pi]", " ", "x", " ", 
+                    RowBox[{"cos", "(", 
+                    RowBox[{"\[Pi]", " ", "t"}], ")"}]}], "-", 
+                   FractionBox[
+                    RowBox[{
+                    SuperscriptBox["\[ExponentialE]", 
+                    RowBox[{"-", "t"}]], " ", 
+                    SuperscriptBox["\[Pi]", "2"], " ", "x", " ", 
+                    RowBox[{"cos", "(", 
+                    RowBox[{"\[Pi]", " ", "t"}], ")"}]}], 
+                    RowBox[{"1", "+", 
+                    SuperscriptBox["\[Pi]", "2"]}]], "+", 
+                   RowBox[{"11", " ", "\[Pi]", " ", "x", " ", 
+                    RowBox[{"cos", "(", 
+                    RowBox[{"\[Pi]", " ", "t"}], ")"}]}], "+", 
+                   FractionBox[
+                    RowBox[{"\[Pi]", " ", "x", " ", 
+                    RowBox[{"cos", "(", 
+                    RowBox[{"\[Pi]", " ", "t"}], ")"}]}], 
+                    RowBox[{"1", "+", 
+                    SuperscriptBox["\[Pi]", "2"]}]], "+", 
+                   FractionBox[
+                    RowBox[{
+                    SuperscriptBox["\[Pi]", "2"], " ", "x", " ", 
+                    RowBox[{
+                    SuperscriptBox["cos", "2"], "(", 
+                    RowBox[{"\[Pi]", " ", "t"}], ")"}]}], 
+                    RowBox[{"1", "+", 
+                    SuperscriptBox["\[Pi]", "2"]}]], "-", 
+                   RowBox[{"11", " ", 
+                    SuperscriptBox["\[ExponentialE]", 
+                    RowBox[{"-", "t"}]], " ", "x"}], "-", 
+                   FractionBox[
+                    RowBox[{
+                    SuperscriptBox["\[ExponentialE]", 
+                    RowBox[{"-", "t"}]], " ", "\[Pi]", " ", "x"}], 
+                    RowBox[{"1", "+", 
+                    SuperscriptBox["\[Pi]", "2"]}]], "+", 
+                   RowBox[{"11", " ", "x"}]}], HoldForm], {
+                 GrayLevel[0], LinebreakAdjustments -> {1, 100, 1, 0, 100}, 
+                 LineIndent -> 0}], "+", 
+               StyleBox[
+               "\"constant\"", {
+                Magnification -> 0.9 Inherited, FontSize -> Inherited, 
+                 FontFamily -> "Roboto", 
+                 LinebreakAdjustments -> {1, 100, 1, 0, 100}, LineIndent -> 
+                 0}]}], {
+              GrayLevel[0.6], LinebreakAdjustments -> {1, 100, 1, 0, 100}, 
+              LineIndent -> 0}], TraditionalForm]], "Output", {
+          Background -> None, 
+           GraphicsBoxOptions -> {
+            DefaultBaseStyle -> {"Graphics", FontFamily -> "Times"}, 
+             DefaultTicksStyle -> 
+             Directive[
+              FontFamily -> "Times", FontSize -> 10, "GraphicsTicks"], 
+             DefaultFrameTicksStyle -> 
+             Directive[
+              FontFamily -> "Times", FontSize -> 10, "GraphicsFrameTicks"], 
+             DefaultFrameStyle -> Directive[
+               GrayLevel[0, 0.35], FontColor -> GrayLevel[0.25], FontOpacity -> 
+               1, "GraphicsFrame"], DefaultAxesStyle -> Directive[
+               GrayLevel[0, 0.35], FontColor -> GrayLevel[0.25], FontOpacity -> 
+               1, "GraphicsAxes"]}, 
+           Graphics3DBoxOptions -> {
+            DefaultBaseStyle -> {FontFamily -> "Times", "Graphics3D"}}}, 
+          NumberPoint -> ".", CellSize -> {550, Automatic}, 
+          AutoStyleOptions -> {"HighlightFormattingErrors" -> False}, 
+          RenderingOptions -> {
+           "3DRenderingMethod" -> "BSPTreeOrDepthBuffer"}]}], 
+       XMLElement[
+       "dataformats", {}, {
+        "plaintext,minput,moutput,computabledata,formatteddata"}]}], 
+     XMLElement["expressiontypes", {"count" -> "1"}, {"\n   ", 
+       XMLElement["expressiontype", {"name" -> "Default"}, {}], "\n  "}], 
+     XMLElement["states", {"count" -> "1"}, {
+       XMLElement[
+       "state", {
+        "name" -> "Step-by-step solution", "input" -> 
+         "TrigExpand__Step-by-step solution", "stepbystep" -> "true", 
+         "buttonstyle" -> "StepByStepSolution"}, {}]}]}], Typeset`pod4$$, 
+   Typeset`pod5$$, Typeset`pod6$$, Typeset`pod7$$, Typeset`pod8$$, 
+   Typeset`pod9$$, Typeset`pod10$$, Typeset`pod11$$, Typeset`pod12$$, 
+   Typeset`pod13$$, Typeset`pod14$$, Typeset`pod15$$, Typeset`pod16$$, 
+   Typeset`pod17$$, Typeset`pod18$$, Typeset`pod19$$, Typeset`pod20$$, 
+   Typeset`pod21$$, Typeset`pod22$$, Typeset`pod23$$, Typeset`pod24$$, 
+   Typeset`pod25$$, Typeset`pod26$$, Typeset`pod27$$, Typeset`pod28$$, 
+   Typeset`pod29$$, Typeset`pod30$$, Typeset`pod31$$, Typeset`aux1$$ = {
+   True, False, {False}, True}, Typeset`aux2$$ = {
+   True, False, {False, False, False}, True}, Typeset`aux3$$ = {
+   True, False, {False}, True}, Typeset`aux4$$ = {True, False, {False}, True},
+    Typeset`aux5$$ = {True, False, {False}, True}, Typeset`aux6$$ = {
+   True, False, {False}, True}, Typeset`aux7$$ = {True, False, {False}, True},
+    Typeset`aux8$$ = {True, False, {False}, True}, Typeset`aux9$$ = {
+   True, False, {False}, True}, Typeset`aux10$$ = {
+   True, False, {False}, True}, Typeset`aux11$$ = {
+   True, False, {False}, True}, Typeset`aux12$$ = {
+   True, False, {False}, True}, Typeset`aux13$$ = {
+   True, False, {False}, True}, Typeset`aux14$$ = {
+   True, False, {False}, True}, Typeset`aux15$$ = {
+   True, False, {False}, True}, Typeset`aux16$$ = {
+   True, False, {False}, True}, Typeset`aux17$$ = {
+   True, False, {False}, True}, Typeset`aux18$$ = {
+   True, False, {False}, True}, Typeset`aux19$$ = {
+   True, False, {False}, True}, Typeset`aux20$$ = {
+   True, False, {False}, True}, Typeset`aux21$$ = {
+   True, False, {False}, True}, Typeset`aux22$$ = {
+   True, False, {False}, True}, Typeset`aux23$$ = {
+   True, False, {False}, True}, Typeset`aux24$$ = {
+   True, False, {False}, True}, Typeset`aux25$$ = {
+   True, False, {False}, True}, Typeset`aux26$$ = {
+   True, False, {False}, True}, Typeset`aux27$$ = {
+   True, False, {False}, True}, Typeset`aux28$$ = {
+   True, False, {False}, True}, Typeset`aux29$$ = {
+   True, False, {False}, True}, Typeset`aux30$$ = {
+   True, False, {False}, True}, Typeset`aux31$$ = {
+   True, False, {False}, True}, Typeset`asyncpods$$ = {}, Typeset`nonpods$$ = {
+    XMLElement["assumptions", {"count" -> "2"}, {
+      XMLElement[
+      "assumption", {
+       "type" -> "FormulaVariable", "template" -> 
+        "function to integrate:${field}", "count" -> "1", "pulldown" -> 
+        "false", "current" -> "1", "default" -> 
+        "{\"F\", \"Integral\", \"integrand\"} -> \"(1+ Pi * Cos[Pi*t]) * \
+(11*(1-Exp[-t])+Pi/(1+Pi^2)*(Cos[Pi*t]+Pi*Sin[Pi*t]-Exp[-t]))\""}, {
+        XMLElement[
+        "value", {
+         "valid" -> "true", "name" -> "Integral.integrand", "desc" -> 
+          "(1+ Pi * Cos[Pi*t]) * \
+(11*(1-Exp[-t])+Pi/(1+Pi^2)*(Cos[Pi*t]+Pi*Sin[Pi*t]-Exp[-t]))", "input" -> 
+          "{\"F\", \"Integral\", \"integrand\"} -> \"(1+ Pi * Cos[Pi*t]) * \
+(11*(1-Exp[-t])+Pi/(1+Pi^2)*(Cos[Pi*t]+Pi*Sin[Pi*t]-Exp[-t]))\""}, {}]}], 
+      XMLElement[
+      "assumption", {
+       "type" -> "FormulaVariableInclude", "template" -> 
+        "Also include: ${desc}${separator}${desc}", "count" -> "2", 
+        "pulldown" -> "false", "default" -> 
+        "{\"FVarOpt\", \"1\"} -> {{}, {{{\"Integral\", \"rangestart\"}, \
+{\"Integral\", \"rangeend\"}}, {{\"Integral\", \"variable\"}}}, {}}"}, {
+        XMLElement[
+        "value", {
+         "name" -> "Integral.rangestart,Integral.rangeend", "desc" -> 
+          "domain of integration", "input" -> 
+          "{\"FVarOpt\"} -> {{\"Integral\", \"rangestart\"}, {\"Integral\", \
+\"rangeend\"}}"}, {}], 
+        XMLElement[
+        "value", {
+         "name" -> "Integral.variable", "desc" -> "variable", "input" -> 
+          "{\"FVarOpt\"} -> {{\"Integral\", \"variable\"}}"}, {}]}]}]}, 
+   Typeset`initdone$$ = FrontEnd`SuppressEvaluationHash[True], 
+   Typeset`queryinfo$$ = {{
+    "success" -> "true", "error" -> 
+     "false", {"http://www.w3.org/XML/1998/namespace", "space"} -> "preserve",
+      "numpods" -> "1", "datatypes" -> "", "timedout" -> 
+     "Integral,MultiDimensionalIntegration,Series,Plot,Plotter,Simplification,\
+Sequence,Sum", "timedoutpods" -> "", "timing" -> "4.368", "parsetiming" -> 
+     "0.", "parsetimedout" -> "false", "recalculate" -> 
+     "https://www6b3.wolframalpha.com/api/v1/recalc.jsp?id=\
+MSPa9651249g7c6hi01g0h3c00005788cga00ebc27e23629183885576317489", "id" -> 
+     "MSP9652249g7c6hi01g0h3c00002ai6fif866fa53bi", "host" -> 
+     "https://www6b3.wolframalpha.com", "server" -> "3", "related" -> 
+     "https://www6b3.wolframalpha.com/api/v1/relatedQueries.jsp?id=\
+MSPa9653249g7c6hi01g0h3c0000675agie03hba3af23629183885576317489", "version" -> 
+     "2.6", "inputstring" -> "integral"}, {
+    "success" -> "true", "error" -> 
+     "false", {"http://www.w3.org/XML/1998/namespace", "space"} -> "preserve",
+      "numpods" -> "2", "datatypes" -> "", "timedout" -> 
+     "Integral,MultiDimensionalIntegration,Series,Plot,Plotter,Simplification,\
+Sequence,Sum", "timedoutpods" -> "", "timing" -> "5.186", "parsetimedout" -> 
+     "false", "recalculate" -> "", "id" -> "", "parseidserver" -> "8", "host" -> 
+     "https://www6b3.wolframalpha.com", "server" -> "8", "related" -> "", 
+     "version" -> "2.6", "inputstring" -> "integral"}}, 
+   Typeset`sessioninfo$$ = {
+   "TimeZone" -> 1., 
+    "Date" -> {2024, 10, 1, 10, 41, 58.1063907`9.51679873087706}, "Line" -> 
+    364, "SessionID" -> 29666119034215542234}, Typeset`showpods$$ = {1, 2, 3},
+    Typeset`failedpods$$ = {4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 
+   18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31}, 
+   Typeset`chosen$$ = {}, Typeset`open$$ = False, Typeset`newq$$ = 
+   "integral"}, 
+   DynamicBox[ToBoxes[
+     AlphaIntegration`FormatAlphaResults[
+      Dynamic[{
+       2, {Typeset`pod1$$, Typeset`pod2$$, Typeset`pod3$$, Typeset`pod4$$, 
+         Typeset`pod5$$, Typeset`pod6$$, Typeset`pod7$$, Typeset`pod8$$, 
+         Typeset`pod9$$, Typeset`pod10$$, Typeset`pod11$$, Typeset`pod12$$, 
+         Typeset`pod13$$, Typeset`pod14$$, Typeset`pod15$$, Typeset`pod16$$, 
+         Typeset`pod17$$, Typeset`pod18$$, Typeset`pod19$$, Typeset`pod20$$, 
+         Typeset`pod21$$, Typeset`pod22$$, Typeset`pod23$$, Typeset`pod24$$, 
+         Typeset`pod25$$, Typeset`pod26$$, Typeset`pod27$$, Typeset`pod28$$, 
+         Typeset`pod29$$, Typeset`pod30$$, Typeset`pod31$$}, {
+        Typeset`aux1$$, Typeset`aux2$$, Typeset`aux3$$, Typeset`aux4$$, 
+         Typeset`aux5$$, Typeset`aux6$$, Typeset`aux7$$, Typeset`aux8$$, 
+         Typeset`aux9$$, Typeset`aux10$$, Typeset`aux11$$, Typeset`aux12$$, 
+         Typeset`aux13$$, Typeset`aux14$$, Typeset`aux15$$, Typeset`aux16$$, 
+         Typeset`aux17$$, Typeset`aux18$$, Typeset`aux19$$, Typeset`aux20$$, 
+         Typeset`aux21$$, Typeset`aux22$$, Typeset`aux23$$, Typeset`aux24$$, 
+         Typeset`aux25$$, Typeset`aux26$$, Typeset`aux27$$, Typeset`aux28$$, 
+         Typeset`aux29$$, Typeset`aux30$$, Typeset`aux31$$}, Typeset`chosen$$,
+         Typeset`open$$, Typeset`elements$$, Typeset`q$$, Typeset`opts$$, 
+        Typeset`nonpods$$, Typeset`queryinfo$$, Typeset`sessioninfo$$, 
+        Typeset`showpods$$, Typeset`failedpods$$, Typeset`newq$$}]], 
+     StandardForm],
+    ImageSizeCache->{622., {312.79350126208396`, 318.08451688708396`}},
+    TrackedSymbols:>{Typeset`showpods$$, Typeset`failedpods$$}],
+   DynamicModuleValues:>{},
+   Initialization:>If[
+     And[
+      Not[Typeset`initdone$$ === True], 
+      Not[Typeset`initdone$$ === FrontEnd`SuppressEvaluationHash[True]]], 
+     Null; AlphaIntegration`DoAsyncInitialization[
+       Hold[{
+        2, {Typeset`pod1$$, Typeset`pod2$$, Typeset`pod3$$, Typeset`pod4$$, 
+          Typeset`pod5$$, Typeset`pod6$$, Typeset`pod7$$, Typeset`pod8$$, 
+          Typeset`pod9$$, Typeset`pod10$$, Typeset`pod11$$, Typeset`pod12$$, 
+          Typeset`pod13$$, Typeset`pod14$$, Typeset`pod15$$, Typeset`pod16$$, 
+          Typeset`pod17$$, Typeset`pod18$$, Typeset`pod19$$, Typeset`pod20$$, 
+          Typeset`pod21$$, Typeset`pod22$$, Typeset`pod23$$, Typeset`pod24$$, 
+          Typeset`pod25$$, Typeset`pod26$$, Typeset`pod27$$, Typeset`pod28$$, 
+          Typeset`pod29$$, Typeset`pod30$$, Typeset`pod31$$}, {
+         Typeset`aux1$$, Typeset`aux2$$, Typeset`aux3$$, Typeset`aux4$$, 
+          Typeset`aux5$$, Typeset`aux6$$, Typeset`aux7$$, Typeset`aux8$$, 
+          Typeset`aux9$$, Typeset`aux10$$, Typeset`aux11$$, Typeset`aux12$$, 
+          Typeset`aux13$$, Typeset`aux14$$, Typeset`aux15$$, Typeset`aux16$$, 
+          Typeset`aux17$$, Typeset`aux18$$, Typeset`aux19$$, Typeset`aux20$$, 
+          Typeset`aux21$$, Typeset`aux22$$, Typeset`aux23$$, Typeset`aux24$$, 
+          Typeset`aux25$$, Typeset`aux26$$, Typeset`aux27$$, Typeset`aux28$$, 
+          Typeset`aux29$$, Typeset`aux30$$, Typeset`aux31$$}, 
+         Typeset`chosen$$, Typeset`open$$, Typeset`elements$$, Typeset`q$$, 
+         Typeset`opts$$, Typeset`nonpods$$, Typeset`queryinfo$$, 
+         Typeset`sessioninfo$$, Typeset`showpods$$, Typeset`failedpods$$, 
+         Typeset`newq$$, 
+         "https://www6b3.wolframalpha.com/api/v1/recalc.jsp?id=\
+MSPa9651249g7c6hi01g0h3c00005788cga00ebc27e23629183885576317489", 
+         Typeset`asyncpods$$}]]; Typeset`asyncpods$$ = {}; 
+     Typeset`initdone$$ = FrontEnd`SuppressEvaluationHash[True]],
+   SynchronousInitialization->False],
+  BaseStyle->{Deployed -> True},
+  DeleteWithContents->True,
+  Editable->False,
+  SelectWithContents->True]], "Print", "WolframAlphaFullOutput",
+ CellChangeTimes->{
+  3.9367644711350136`*^9},ExpressionUUID->"608a6648-c3a8-ce49-a81b-\
+8a512064b904"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Testing 2.15", "Subsubsection",
+ CellChangeTimes->{{3.936765546362213*^9, 
+  3.9367655477212887`*^9}},ExpressionUUID->"3c5d7570-9a13-d047-b478-\
+833e61ada207"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"K", " ", "=", " ", 
+  RowBox[{"11", " ", "+", " ", 
+   RowBox[{"Pi", " ", "/", " ", 
+    RowBox[{"(", 
+     RowBox[{"1", " ", "+", " ", 
+      RowBox[{"Pi", "^", "2"}]}], ")"}]}]}]}]], "Input",
+ CellChangeTimes->{{3.9367655536798325`*^9, 3.9367655675706234`*^9}},
+ CellLabel->
+  "In[364]:=",ExpressionUUID->"2ab642dc-1bd8-274b-8266-afd25e15e868"],
+
+Cell[BoxData[
+ RowBox[{"11", "+", 
+  FractionBox["\[Pi]", 
+   RowBox[{"1", "+", 
+    SuperscriptBox["\[Pi]", "2"]}]]}]], "Output",
+ CellChangeTimes->{3.936765569113106*^9},
+ CellLabel->
+  "Out[364]=",ExpressionUUID->"f11443ea-cf6c-d743-8a0d-8e6bb5416936"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"N", "[", "K", "]"}]], "Input",
+ CellChangeTimes->{{3.9367655872705307`*^9, 3.9367655893428535`*^9}},
+ CellLabel->
+  "In[365]:=",ExpressionUUID->"dc55b220-d823-e24b-9724-50ec593caeca"],
+
+Cell[BoxData["11.289025482222236`"], "Output",
+ CellChangeTimes->{3.936765590835129*^9},
+ CellLabel->
+  "Out[365]=",ExpressionUUID->"8e219eec-dc98-0244-ab85-cd058096007a"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"IFull", "=", 
+   RowBox[{"Integrate", "[", 
+    RowBox[{
+     RowBox[{
+      RowBox[{"aPrime", "[", "t", "]"}], "*", 
+      RowBox[{"(", 
+       RowBox[{
+        RowBox[{
+         RowBox[{"-", 
+          RowBox[{"Exp", "[", 
+           RowBox[{"-", "t"}], "]"}]}], "*", "K"}], "+", 
+        RowBox[{
+         RowBox[{"Pi", "/", 
+          RowBox[{"(", 
+           RowBox[{"1", "+", 
+            RowBox[{"Pi", "^", "2"}]}], ")"}]}], "*", 
+         RowBox[{"(", 
+          RowBox[{
+           RowBox[{"Cos", "[", 
+            RowBox[{"Pi", "*", "t"}], "]"}], "+", 
+           RowBox[{"Pi", "*", 
+            RowBox[{"Sin", "[", 
+             RowBox[{"Pi", "*", "t"}], "]"}]}]}], ")"}]}], "+", " ", "11"}], 
+       ")"}]}], ",", 
+     RowBox[{"{", 
+      RowBox[{"t", ",", "0", ",", "1"}], "}"}]}], "]"}]}], 
+  "\n"}], "\[IndentingNewLine]", 
+ RowBox[{"N", "[", "IFull", "]"}]}], "Input",
+ CellChangeTimes->{{3.936765608591345*^9, 3.9367657212071953`*^9}, {
+   3.936765751880413*^9, 3.9367658196792564`*^9}, 3.9367659681734123`*^9, 
+   3.936766056256071*^9, {3.9367661378070717`*^9, 3.936766145750553*^9}, {
+   3.936766185048752*^9, 3.9367661965750904`*^9}},
+ CellLabel->
+  "In[382]:=",ExpressionUUID->"2c2a6bd1-8280-3047-93cc-8fed4ecd2c6f"],
+
+Cell[BoxData[
+ FractionBox[
+  RowBox[{"22", "-", 
+   RowBox[{"20", " ", 
+    RowBox[{"(", 
+     RowBox[{"1", "+", "\[ExponentialE]"}], ")"}], " ", "\[Pi]"}], "-", 
+   RowBox[{
+    RowBox[{"(", 
+     RowBox[{
+      RowBox[{"-", "42"}], "+", "\[ExponentialE]"}], ")"}], " ", 
+    SuperscriptBox["\[Pi]", "2"]}], "-", 
+   RowBox[{"20", " ", 
+    RowBox[{"(", 
+     RowBox[{"1", "+", "\[ExponentialE]"}], ")"}], " ", 
+    SuperscriptBox["\[Pi]", "3"]}], "+", 
+   RowBox[{
+    RowBox[{"(", 
+     RowBox[{"22", "+", "\[ExponentialE]"}], ")"}], " ", 
+    SuperscriptBox["\[Pi]", "4"]}]}], 
+  RowBox[{"2", " ", "\[ExponentialE]", " ", 
+   SuperscriptBox[
+    RowBox[{"(", 
+     RowBox[{"1", "+", 
+      SuperscriptBox["\[Pi]", "2"]}], ")"}], "2"]}]]], "Output",
+ CellChangeTimes->{
+  3.936765723410551*^9, {3.9367657648580112`*^9, 3.9367658236625786`*^9}, 
+   3.9367659736679955`*^9, 3.9367660649569244`*^9, 3.9367661543707657`*^9, 
+   3.9367661994176235`*^9},
+ CellLabel->
+  "Out[382]=",ExpressionUUID->"542780a0-ad2e-cd46-a0a0-120bdd8e0641"],
+
+Cell[BoxData["0.43288706083240874`"], "Output",
+ CellChangeTimes->{
+  3.936765723410551*^9, {3.9367657648580112`*^9, 3.9367658236625786`*^9}, 
+   3.9367659736679955`*^9, 3.9367660649569244`*^9, 3.9367661543707657`*^9, 
+   3.9367661994211636`*^9},
+ CellLabel->
+  "Out[383]=",ExpressionUUID->"553d4edb-5cac-2042-84de-8d029f6ed470"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{"I1", " ", "=", " ", 
+  RowBox[{"Integrate", "[", 
+   RowBox[{
+    RowBox[{"(", 
+     RowBox[{
+      RowBox[{"-", 
+       RowBox[{"Exp", "[", 
+        RowBox[{"-", "t"}], "]"}]}], "*", "K"}], ")"}], ",", 
+    RowBox[{"{", 
+     RowBox[{"t", ",", "0", ",", "1"}], "}"}]}], 
+   "]"}]}], "\[IndentingNewLine]", 
+ RowBox[{"N", "[", "I1", "]"}]}], "Input",
+ CellChangeTimes->{{3.9367663379158764`*^9, 3.9367663856842384`*^9}},
+ CellLabel->
+  "In[384]:=",ExpressionUUID->"94c4f965-95a1-c549-b4e7-6e8585137e2c"],
+
+Cell[BoxData[
+ RowBox[{"-", 
+  FractionBox[
+   RowBox[{
+    RowBox[{"(", 
+     RowBox[{
+      RowBox[{"-", "1"}], "+", "\[ExponentialE]"}], ")"}], " ", 
+    RowBox[{"(", 
+     RowBox[{"11", "+", "\[Pi]", "+", 
+      RowBox[{"11", " ", 
+       SuperscriptBox["\[Pi]", "2"]}]}], ")"}]}], 
+   RowBox[{"\[ExponentialE]", " ", 
+    RowBox[{"(", 
+     RowBox[{"1", "+", 
+      SuperscriptBox["\[Pi]", "2"]}], ")"}]}]]}]], "Output",
+ CellChangeTimes->{3.9367663871567936`*^9},
+ CellLabel->
+  "Out[384]=",ExpressionUUID->"f2c978e3-3d98-c249-883c-9e45812fc348"],
+
+Cell[BoxData[
+ RowBox[{"-", "7.136025096452148`"}]], "Output",
+ CellChangeTimes->{3.9367663871617928`*^9},
+ CellLabel->
+  "Out[385]=",ExpressionUUID->"09609923-c5d6-354f-b9b3-a2327898faa8"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{"I2", "=", 
+  RowBox[{"Integrate", "[", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"Pi", "/", 
+      RowBox[{"(", 
+       RowBox[{"1", "+", 
+        RowBox[{"Pi", "^", "2"}]}], ")"}]}], "*", 
+     RowBox[{"(", 
+      RowBox[{
+       RowBox[{"Cos", "[", 
+        RowBox[{"Pi", "*", "t"}], "]"}], "+", 
+       RowBox[{"Pi", "*", 
+        RowBox[{"Sin", "[", 
+         RowBox[{"Pi", "*", "t"}], "]"}]}]}], ")"}]}], ",", 
+    RowBox[{"{", 
+     RowBox[{"t", ",", "0", ",", "1"}], "}"}]}], 
+   "]"}]}], "\[IndentingNewLine]", 
+ RowBox[{"N", "[", "I2", "]"}]}], "Input",
+ CellChangeTimes->{{3.9367664139567375`*^9, 3.9367664485123043`*^9}},
+ CellLabel->
+  "In[388]:=",ExpressionUUID->"be67a5ee-275a-334e-b564-8ace21172918"],
+
+Cell[BoxData[
+ FractionBox[
+  RowBox[{"2", " ", "\[Pi]"}], 
+  RowBox[{"1", "+", 
+   SuperscriptBox["\[Pi]", "2"]}]]], "Output",
+ CellChangeTimes->{{3.9367664391633396`*^9, 3.936766450450968*^9}},
+ CellLabel->
+  "Out[388]=",ExpressionUUID->"e812a94e-f8c3-5a45-85f7-962d1134f9ab"],
+
+Cell[BoxData["0.5780509644444725`"], "Output",
+ CellChangeTimes->{{3.9367664391633396`*^9, 3.9367664504569683`*^9}},
+ CellLabel->
+  "Out[389]=",ExpressionUUID->"21e4ff80-5ba9-4c44-96c5-35c116794521"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"I3", " ", "=", " ", 
+  RowBox[{"Integrate", "[", 
+   RowBox[{"11", ",", " ", 
+    RowBox[{"{", 
+     RowBox[{"t", ",", "0", ",", "1"}], "}"}]}], "]"}]}]], "Input",
+ CellChangeTimes->{{3.936766463957535*^9, 3.936766485926737*^9}},
+ CellLabel->
+  "In[390]:=",ExpressionUUID->"ce4a9108-9c5d-1945-9bd6-8cffdfd18be7"],
+
+Cell[BoxData["11"], "Output",
+ CellChangeTimes->{3.936766490901203*^9},
+ CellLabel->
+  "Out[390]=",ExpressionUUID->"ecaf7086-5805-674c-b506-baa888549c85"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{"I4", " ", "=", " ", 
+  RowBox[{"Integrate", "[", 
+   RowBox[{
+    RowBox[{"Pi", " ", 
+     RowBox[{"Cos", "[", 
+      RowBox[{"Pi", " ", "t"}], "]"}], "*", " ", 
+     RowBox[{"(", 
+      RowBox[{
+       RowBox[{"-", 
+        RowBox[{"Exp", "[", 
+         RowBox[{"-", "t"}], "]"}]}], "*", "K"}], ")"}]}], ",", 
+    RowBox[{"{", 
+     RowBox[{"t", ",", "0", ",", "1"}], "}"}]}], 
+   "]"}]}], "\[IndentingNewLine]", 
+ RowBox[{"N", "[", "I4", "]"}]}], "Input",
+ CellChangeTimes->{{3.9367664993607273`*^9, 3.936766524949072*^9}, {
+  3.9367665839071445`*^9, 3.936766599623579*^9}},
+ CellLabel->
+  "In[391]:=",ExpressionUUID->"50cafec0-cb72-844c-8a55-0418feb82354"],
+
+Cell[BoxData[
+ RowBox[{"-", 
+  FractionBox[
+   RowBox[{
+    RowBox[{"(", 
+     RowBox[{"1", "+", "\[ExponentialE]"}], ")"}], " ", "\[Pi]", " ", 
+    RowBox[{"(", 
+     RowBox[{"11", "+", "\[Pi]", "+", 
+      RowBox[{"11", " ", 
+       SuperscriptBox["\[Pi]", "2"]}]}], ")"}]}], 
+   RowBox[{"\[ExponentialE]", " ", 
+    SuperscriptBox[
+     RowBox[{"(", 
+      RowBox[{"1", "+", 
+       SuperscriptBox["\[Pi]", "2"]}], ")"}], "2"]}]]}]], "Output",
+ CellChangeTimes->{3.936766601109083*^9},
+ CellLabel->
+  "Out[391]=",ExpressionUUID->"6f6f052c-f2e9-a84c-88a6-b3a45d82d852"],
+
+Cell[BoxData[
+ RowBox[{"-", "4.463138972984727`"}]], "Output",
+ CellChangeTimes->{3.9367666011159897`*^9},
+ CellLabel->
+  "Out[392]=",ExpressionUUID->"249c14d5-fa6d-2843-89bf-c1cc75490263"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"X1", " ", "=", " ", 
+  RowBox[{"Integrate", "[", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"Exp", "[", 
+      RowBox[{"-", "t"}], "]"}], "*", 
+     RowBox[{"Cos", "[", 
+      RowBox[{"Pi", " ", "t"}], "]"}]}], ",", " ", 
+    RowBox[{"{", 
+     RowBox[{"t", ",", " ", "0", ",", " ", "1"}], "}"}]}], "]"}]}]], "Input",
+ CellChangeTimes->{{3.936766808663553*^9, 3.9367668512258854`*^9}},
+ CellLabel->
+  "In[393]:=",ExpressionUUID->"7a244d26-068b-d34f-96aa-28b133f596f2"],
+
+Cell[BoxData[
+ FractionBox[
+  RowBox[{"1", "+", "\[ExponentialE]"}], 
+  RowBox[{"\[ExponentialE]", "+", 
+   RowBox[{"\[ExponentialE]", " ", 
+    SuperscriptBox["\[Pi]", "2"]}]}]]], "Output",
+ CellChangeTimes->{3.9367668525276585`*^9},
+ CellLabel->
+  "Out[393]=",ExpressionUUID->"2d51930b-cc7d-1a47-b1ea-8691a8def6cd"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"Integrate", "[", 
+  RowBox[{
+   RowBox[{
+    RowBox[{"Exp", "[", 
+     RowBox[{"-", "t"}], "]"}], "*", 
+    RowBox[{"Cos", "[", 
+     RowBox[{"Pi", " ", "t"}], "]"}]}], ",", " ", "t"}], "]"}]], "Input",
+ CellChangeTimes->{{3.93676701290526*^9, 3.9367670178084774`*^9}},
+ CellLabel->
+  "In[394]:=",ExpressionUUID->"3ad69f6d-b3e6-4c47-a723-7e7bbdcd827e"],
+
+Cell[BoxData[
+ FractionBox[
+  RowBox[{
+   SuperscriptBox["\[ExponentialE]", 
+    RowBox[{"-", "t"}]], " ", 
+   RowBox[{"(", 
+    RowBox[{
+     RowBox[{"-", 
+      RowBox[{"Cos", "[", 
+       RowBox[{"\[Pi]", " ", "t"}], "]"}]}], "+", 
+     RowBox[{"\[Pi]", " ", 
+      RowBox[{"Sin", "[", 
+       RowBox[{"\[Pi]", " ", "t"}], "]"}]}]}], ")"}]}], 
+  RowBox[{"1", "+", 
+   SuperscriptBox["\[Pi]", "2"]}]]], "Output",
+ CellChangeTimes->{3.936767018680649*^9},
+ CellLabel->
+  "Out[394]=",ExpressionUUID->"e920b8a3-f504-7c44-8c15-750738f0024f"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"Integrate", "[", 
+  RowBox[{
+   RowBox[{"Pi", " ", 
+    RowBox[{"Exp", "[", 
+     RowBox[{"-", "t"}], "]"}], " ", 
+    RowBox[{"Cos", "[", 
+     RowBox[{"Pi", " ", "t"}], "]"}]}], ",", " ", 
+   RowBox[{"{", 
+    RowBox[{"t", ",", " ", "0", ",", " ", "1"}], "}"}]}], "]"}]], "Input",
+ CellChangeTimes->{{3.9367684623102303`*^9, 3.936768528807579*^9}},
+ CellLabel->
+  "In[396]:=",ExpressionUUID->"91e0a2dc-d16f-c24d-a4eb-5ae1db456177"],
+
+Cell[BoxData[
+ FractionBox[
+  RowBox[{
+   RowBox[{"(", 
+    RowBox[{"1", "+", "\[ExponentialE]"}], ")"}], " ", "\[Pi]"}], 
+  RowBox[{"\[ExponentialE]", "+", 
+   RowBox[{"\[ExponentialE]", " ", 
+    SuperscriptBox["\[Pi]", "2"]}]}]]], "Output",
+ CellChangeTimes->{{3.936768502200428*^9, 3.9367685293999557`*^9}},
+ CellLabel->
+  "Out[396]=",ExpressionUUID->"bf5e2116-6a74-6745-acb9-e71dec9db142"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{"I5", "  ", "=", " ", 
+  RowBox[{"Integrate", "[", 
+   RowBox[{
+    RowBox[{"Pi", " ", 
+     RowBox[{"Cos", "[", 
+      RowBox[{"Pi", " ", "t"}], "]"}], " ", "*", " ", 
+     RowBox[{"Pi", "/", 
+      RowBox[{"(", 
+       RowBox[{"1", "+", 
+        RowBox[{"Pi", "^", "2"}]}], ")"}]}], "*", 
+     RowBox[{"Cos", "[", 
+      RowBox[{"Pi", "*", "t"}], "]"}]}], ",", " ", 
+    RowBox[{"{", 
+     RowBox[{"t", ",", "0", ",", "1"}], "}"}]}], 
+   "]"}]}], "\[IndentingNewLine]", 
+ RowBox[{"N", "[", "I5", "]"}]}], "Input",
+ CellChangeTimes->{{3.9367686853036633`*^9, 3.9367687785605583`*^9}, {
+  3.9367688813876095`*^9, 3.93676888142671*^9}},
+ CellLabel->
+  "In[399]:=",ExpressionUUID->"29db197c-1584-8847-8cf7-e5154c145531"],
+
+Cell[BoxData[
+ FractionBox[
+  SuperscriptBox["\[Pi]", "2"], 
+  RowBox[{"2", "+", 
+   RowBox[{"2", " ", 
+    SuperscriptBox["\[Pi]", "2"]}]}]]], "Output",
+ CellChangeTimes->{3.9367687803695393`*^9, 3.9367688837086124`*^9},
+ CellLabel->
+  "Out[399]=",ExpressionUUID->"e2617af5-e839-d843-bfc5-4e29d4132180"],
+
+Cell[BoxData["0.4540001658248124`"], "Output",
+ CellChangeTimes->{3.9367687803695393`*^9, 3.9367688837181263`*^9},
+ CellLabel->
+  "Out[400]=",ExpressionUUID->"137a9219-39db-314a-8b1c-6f6cf40ad302"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"Plot", "[", 
+  RowBox[{
+   RowBox[{
+    RowBox[{"Exp", "[", "y", "]"}], " ", "-", " ", "1", " ", "-", "y"}], ",", 
+   " ", 
+   RowBox[{"{", 
+    RowBox[{"y", ",", " ", "0", ",", " ", "5"}], "}"}]}], "]"}]], "Input",
+ CellChangeTimes->{{3.936922746704279*^9, 3.93692278841975*^9}},
+ CellLabel->
+  "In[1075]:=",ExpressionUUID->"e21b8f12-72ae-f348-beb3-68ee0f28d1b0"],
+
+Cell[BoxData[
+ GraphicsBox[
+  InterpretationBox[{
+    TagBox[{{{}, {}, 
+       TagBox[
+        {RGBColor[0.368417, 0.506779, 0.709798], AbsoluteThickness[2], 
+         Opacity[1.], LineBox[CompressedData["
+1:eJwVlGk81PsfxX/2soWpLhGjiLKkiyzF55sly5U2lK2ZQSghSkXKSCXXNlyK
+RLZkTRgVibGVfRtrBlNju5Zrly3+/g/O65z3k/PovI60g+eFq+wYhlG39X9P
+fOjAfczpvu52dAxM/HWyho43u4S3Bmz25hndL0W6W1/Lg/D4a4CxCw48qKDr
+CkZ/eM/b6w3Y8NE/j2uP6ibSwqW48L6AOWaGB9Qs6CrOOEVsuQQA1sm+xjW2
+qTsgmLS50fMIsLTQeboeN8hk7Dy+tv4EMLuZhPxzgnBDx8f9l1QIYKbEyPoW
+HBR1MtMX9cOA7Dw4/nu3GKy5mTHmXCIBC7qZpLouCclsjJBfhlGAtV352kk7
+AAbNUbLLPdGAPYy0OGtxCMbjjCoXr8UAxt+FHdY8AmFOv+0W1mMBW3t1JfCG
+MtDXXWNmpeIBKZywf85ShTvfJFVmCl4CObU8YujOcdj3T2fjtP4rINf/fvD2
+Ty1wOII4Jl1eA/mtFiwcBGBf92td9E8GMrT6NSqegk6m5f5FwxTAFkziN/r1
+4F4uX8l8Typg89jbV3dPg2n0KPd8chqQlSJTxJ2MQeJepcXctXTADvMvi101
+BZr+3dmZ9TeAiSqNUtPNgaf/p9y0VBbgNTZE0gQsoJf2xWdqPAuwueuC560s
+ITsjrnqyIBtoDZ5ihCwrMPc2J0zo5wJa7sjL8bCG5ztLn4+55AP6PWfle4cA
+1Lum3rdE3wO51U32TAgRXk1oiC34b/NsGl+SHQk82kRc5g0LAG3cvrIT5wgi
+r+rY53oKgebOvRdVOMO64IesmyeLIHlqbDj8owsMB6adm00uAnK45SfFYlf4
+4PIwaeYaFVCJf91V2nWwUVXT/m+9GGjpsTrYH56Q0vDaa1KqBGaTa60uOd6G
+xbjiI0NhJUCjxxpQRX3gtEsjq2O1BJI/u68atPvAFMcvy1J6KSC9x0o8ZndB
+U8dcOyS4DMjqQnvUXf2gLX+DXW6mAshmr76oJ5FBBHZeEVCmAdPOYKxTJBBO
+HIrRDnaiQVs2D5tYSCBELGYt+LXTIPmAfUe03yNQi+q66pBTCbRzbglEr8cQ
+0KBoeoxQDZTDeSc58p9BZsHHQzmx1YBxfRI/rRsCHXF6HLJN1UA0KNbXag0B
+GZfLZaJaNYDsbM+qLv8NDRyPlTFcLRBtLcL+vhwOe3X6RVq/fgUhSV5FqkYU
+vMsP6b+h3ADnjKI+BC09hwmRiTBTUgOojBy7r3fhBcjdMdWVj2mAOoxn5Vv+
+C0g+yZfCWm0Amle4lbx7HETXhznb1DbCrP2bi0Zz8XCHFTlnZNcMbY3J+wyk
+EuE1X2OQsGEbyD8dGj3Omwq6OvftyFfagDK4GXnWMBUYHgrqM3fbAK2kpreR
+U0G0I3S0KXubbTM+8K+mQlScmckzoXaIS/Xm9/ovDYJkWwS3+tvBVfmW4q7p
+N+AC7fFT3nTIrOoWa9DOBix1ubQ/lA5EpvJSZ2A2xHFKMBrS6YDPNTIxqc+G
+unpnyaxuOjC7jDFP6xyQt9hIvardCWS3ScWih7kw7iqXO8jWBczOoja9gXdw
+PfpBeRulG+TxjWEdSwXAvpQ6VJHVDcbxi6t/4Avh5aU6LL+qG3ontGpjTAuh
+QQKnH764zRu+TWrJhaDwNvObyeUecFKz3BAyL4Kpz/S2KqleoOA95syoVPAY
+OcyivusDV2qjl3vOR2Be6dtRWd8HlOHWL2vMj3Cx95ly83AfUPX33mra+wk0
+G8d8R/Z9B6xVNVwn6BNwFLwR2hv8HTjtxnOtCSUQ5y+te5fQD8zH1or/yHyG
+SpxYvJbQAJSdEzf9zioHtfC6ckOFAUCLN8qVDlRABve94fOnB0C0if9CPbEC
+wla7j173HwAVO5PzfYMVYDUU8/Xl+ACE1T/mVPGkwUS20OI6bRB2E7yzonwq
+gVf6sdyQJhMoehFdSknVUHcy6uhDQyZgHHEr0RXV8PRyksb+C0xwvfFQQ+xH
+NbBTPhnZujEBvVXUCZGpgbXNKZeeRCas7EA9K7k1MMmwzGxl/wExu7vbpGtq
+oSlO7jCt6Qf0+kacWuGrgwihxiMpRBZoNu1iFnE2Q4nG/mJzDxaU7VFaPv9n
+Mwxf8YSN+6ztf6/7tY/YDCfycBaXXrCAMb/IrVzWDOMmdg8EWlhQp3jY2uZO
+C+gHTbf6nhiGRb9TPIz5VlhZ2uVzYe8I3BYbCQh62g4O/RYVHE2jYGDYMiE6
+0gm8CT/cvfpGwezvsoN82zsptPGQGBodBer0d+Lu/V3A8T3Yt5RtDB7FWQne
+sOyC9N5SVS+NMRBanjc89q0LRrvwmYOpY2Bg6VMont8N19umKCW+48B4Jp5f
+TOkFr9rHDp5yEzAqoB6gnsgAyeHT3MuqE+C/rJk4XcaARvad2f5oAngF/FY+
+Mxggi8LnQqwnQFKGEpIgMQB9pbHk9NAJ+I+tg9clcQBOvc9I6puZgDuT0ic0
+0gZBOKHuu/6nSdhVa2H6m8CEgpv8F0VNpuHtjyFXruSfkHLfbULl0iw419Wp
+/VQch0evN84vTs3BlHkbVUHvP8DoTFTmtwC0YbZjgjHzcOi28z2LI0tQymly
+EEaXYXjphRXfl+XtfcXqyT9bB9OR6w+ivVZg+ol9Um0ahsyHKQqSkmtgVBXw
+y2yQA01UO5Dr8tZhJlUoxcKYBykLd+/XJ/yGSa3Yuj2+fIgXlkiMhU2IuncX
+zbJ2IaNpm18HLDG0Mku/s5kugnqrnNhsFNmQAb1ek5C2BxU/q7mCX2JDMY71
+mR61osiZy4fZ0sKOFPLcDWxiJJCj9/1i/pccyMJqU5LbGI+Ouii0mJE4kXS2
+sP/L2wdQq4gin48WF1L04SrK2yuLPr97lKDIwY1wVqoqmZ1y6D7bkXNNA9zo
+o4SjRbasAuJl+Bl7UHlQnZLnDpkGZTSSIR3z2n8HWu+Slps2PoZi5MU4Syx3
+op+h8gVDFFVEeen8jYTnRX5uRdfJM+rIJsa+hX+MFw0bXvg1F6iJVgzerL4u
+50M9Zl3vHBJOINaI3r2qYH5k5tAuEd+ui1J1jok3kwSQYMac7e9Lp1DeEx9h
+FyVBBGffOw9a66NgS8e/OJYEUZk2Y0Qk2BCpM1Kygpt3IbWUSvt4WWMUdzgh
+r/kvIUTkYm0KMkxRAC087q8SIWTQ0tOVJmWOzohbvmmQEUb2cTWE2N5z6JTH
+N1vhEGHkKqCw0Pz+Anot4SDTtCSMKkvuOSSNWyCZ6rfPzW1F0Il9epLv1S4h
+ilLVkY5yERTz8IuMSYE1cl7gbK8/gkOufoNOhHd2yKFgHh8SiUPnquMfPK4l
+oBuPLm6YRuHQ0h+qttydBORzkdrD/w8O+XRLZET8JKBnSz4RlOc4lPFUJbJw
+i4Deaa2uv0jEoc4I1ubB/US0WrnVnZGDQ70DUqOWl4mI0sEfXvMNh47zJH1Q
+byeil2nurk/rt/unbukze4ko7XaLvnEjDlk4O6hHMInow17KWmMLDoUaPDJf
+nCEihg3Old6FQ1ydVQH/CpKQHEtM/ycLh0I+iqv4niEhFaqfZPoIDml681fb
+WJKQ9pP+1atjOJRmZEQHexIyk0t8/+8EDtVzVnjtdichbze85NwcDtnNdLeP
+hZGQ/8nA1cIFHOKcV/UbiSGhJwI/O28v4VCgslru6CsSistPC11ZwaHT7ZeK
+FnJJKJXM6VK6hkN5OfGhW1QSyjl/Vc9/A4eqMz8vCH4hIeqBr/t1N3FotcR8
+WrqWhMoXDq1ubeGQYOCwr2YzCf0PfilkZQ==
+          "]]},
+        Annotation[#, "Charting`Private`Tag#1"]& ]}, {}},
+     {"WolframDynamicHighlight", <|
+      "Label" -> {"XYLabel"}, "Ball" -> {"InterpolatedBall"}|>}], 
+    StyleBox[
+     DynamicBox[(Charting`HighlightActionBox["DynamicHighlight", {}, 
+       Slot["HighlightElements"], 
+       Slot["LayoutOptions"], 
+       Slot["Meta"], 
+       Charting`HighlightActionFunction["DynamicHighlight", {{{{}, {}, 
+           Annotation[{
+             Directive[
+              Opacity[1.], 
+              RGBColor[0.368417, 0.506779, 0.709798], 
+              AbsoluteThickness[2]], 
+             Line[CompressedData["
+1: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
+WrqWhMoXDq1ubeGQYOCwr2YzCf0PfilkZQ==
+              "]]}, "Charting`Private`Tag#1"]}}, {}}, <|
+        "HighlightElements" -> <|
+          "Label" -> {"XYLabel"}, "Ball" -> {"InterpolatedBall"}|>, 
+         "LayoutOptions" -> <|
+          "PanelPlotLayout" -> <||>, 
+           "PlotRange" -> {{0, 5}, {0., 142.41314406041823`}}, 
+           "Frame" -> {{False, False}, {False, False}}, 
+           "AxesOrigin" -> {0, 0}, "ImageSize" -> {360, 360/GoldenRatio}, 
+           "Axes" -> {True, True}, "LabelStyle" -> {}, "AspectRatio" -> 
+           GoldenRatio^(-1), "DefaultStyle" -> {
+             Directive[
+              Opacity[1.], 
+              RGBColor[0.368417, 0.506779, 0.709798], 
+              AbsoluteThickness[2]]}, 
+           "HighlightLabelingFunctions" -> <|"CoordinatesToolOptions" -> ({
+               Identity[
+                Part[#, 1]], 
+               Identity[
+                Part[#, 2]]}& ), 
+             "ScalingFunctions" -> {{Identity, Identity}, {
+               Identity, Identity}}|>, "Primitives" -> {}, "GCFlag" -> 
+           False|>, 
+         "Meta" -> <|
+          "DefaultHighlight" -> {"Dynamic", None}, "Index" -> {}, "Function" -> 
+           Plot, "GroupHighlight" -> False|>|>]]& )[<|
+       "HighlightElements" -> <|
+         "Label" -> {"XYLabel"}, "Ball" -> {"InterpolatedBall"}|>, 
+        "LayoutOptions" -> <|
+         "PanelPlotLayout" -> <||>, 
+          "PlotRange" -> {{0, 5}, {0., 142.41314406041823`}}, 
+          "Frame" -> {{False, False}, {False, False}}, "AxesOrigin" -> {0, 0},
+           "ImageSize" -> {360, 360/GoldenRatio}, "Axes" -> {True, True}, 
+          "LabelStyle" -> {}, "AspectRatio" -> GoldenRatio^(-1), 
+          "DefaultStyle" -> {
+            Directive[
+             Opacity[1.], 
+             RGBColor[0.368417, 0.506779, 0.709798], 
+             AbsoluteThickness[2]]}, 
+          "HighlightLabelingFunctions" -> <|"CoordinatesToolOptions" -> ({
+              Identity[
+               Part[#, 1]], 
+              Identity[
+               Part[#, 2]]}& ), 
+            "ScalingFunctions" -> {{Identity, Identity}, {
+              Identity, Identity}}|>, "Primitives" -> {}, "GCFlag" -> False|>,
+         "Meta" -> <|
+         "DefaultHighlight" -> {"Dynamic", None}, "Index" -> {}, "Function" -> 
+          Plot, "GroupHighlight" -> False|>|>],
+      ImageSizeCache->{{4.503599627370496*^15, -4.503599627370496*^15}, {
+       4.503599627370496*^15, -4.503599627370496*^15}}],
+     Selectable->False]},
+   Annotation[{{{{}, {}, 
+       Annotation[{
+         Directive[
+          Opacity[1.], 
+          RGBColor[0.368417, 0.506779, 0.709798], 
+          AbsoluteThickness[2]], 
+         Line[CompressedData["
+1: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
+WrqWhMoXDq1ubeGQYOCwr2YzCf0PfilkZQ==
+          "]]}, "Charting`Private`Tag#1"]}}, {}}, <|
+    "HighlightElements" -> <|
+      "Label" -> {"XYLabel"}, "Ball" -> {"InterpolatedBall"}|>, 
+     "LayoutOptions" -> <|
+      "PanelPlotLayout" -> <||>, 
+       "PlotRange" -> {{0, 5}, {0., 142.41314406041823`}}, 
+       "Frame" -> {{False, False}, {False, False}}, "AxesOrigin" -> {0, 0}, 
+       "ImageSize" -> {360, 360/GoldenRatio}, "Axes" -> {True, True}, 
+       "LabelStyle" -> {}, "AspectRatio" -> GoldenRatio^(-1), "DefaultStyle" -> {
+         Directive[
+          Opacity[1.], 
+          RGBColor[0.368417, 0.506779, 0.709798], 
+          AbsoluteThickness[2]]}, 
+       "HighlightLabelingFunctions" -> <|"CoordinatesToolOptions" -> ({
+           Identity[
+            Part[#, 1]], 
+           Identity[
+            Part[#, 2]]}& ), 
+         "ScalingFunctions" -> {{Identity, Identity}, {Identity, Identity}}|>,
+        "Primitives" -> {}, "GCFlag" -> False|>, 
+     "Meta" -> <|
+      "DefaultHighlight" -> {"Dynamic", None}, "Index" -> {}, "Function" -> 
+       Plot, "GroupHighlight" -> False|>|>, "DynamicHighlight"]],
+  AspectRatio->NCache[GoldenRatio^(-1), 0.6180339887498948],
+  Axes->{True, True},
+  AxesLabel->{None, None},
+  AxesOrigin->{0, 0},
+  DisplayFunction->Identity,
+  Frame->{{False, False}, {False, False}},
+  FrameLabel->{{None, None}, {None, None}},
+  FrameTicks->{{Automatic, Automatic}, {Automatic, Automatic}},
+  GridLines->{None, None},
+  GridLinesStyle->Directive[
+    GrayLevel[0.5, 0.4]],
+  ImagePadding->All,
+  Method->{
+   "DefaultBoundaryStyle" -> Automatic, 
+    "DefaultGraphicsInteraction" -> {
+     "Version" -> 1.2, "TrackMousePosition" -> {True, False}, 
+      "Effects" -> {
+       "Highlight" -> {"ratio" -> 2}, "HighlightPoint" -> {"ratio" -> 2}, 
+        "Droplines" -> {
+         "freeformCursorMode" -> True, 
+          "placement" -> {"x" -> "All", "y" -> "None"}}}}, "DefaultMeshStyle" -> 
+    AbsolutePointSize[6], "ScalingFunctions" -> None, 
+    "CoordinatesToolOptions" -> {"DisplayFunction" -> ({
+        (Identity[#]& )[
+         Part[#, 1]], 
+        (Identity[#]& )[
+         Part[#, 2]]}& ), "CopiedValueFunction" -> ({
+        (Identity[#]& )[
+         Part[#, 1]], 
+        (Identity[#]& )[
+         Part[#, 2]]}& )}},
+  PlotRange->{{0, 5}, {0., 142.41314406041823`}},
+  PlotRangeClipping->True,
+  PlotRangePadding->{{
+     Scaled[0.02], 
+     Scaled[0.02]}, {
+     Scaled[0.05], 
+     Scaled[0.05]}},
+  Ticks->{Automatic, Automatic}]], "Output",
+ CellChangeTimes->{{3.9369227704015274`*^9, 3.936922790022768*^9}},
+ CellLabel->
+  "Out[1075]=",ExpressionUUID->"803b2ae9-f5f3-364a-ac92-cbed5d98c33c"]
+}, Open  ]]
+}, Open  ]]
 },
-WindowSize->{685.1999999999999, 1069.8},
-WindowMargins->{{Automatic, 132}, {Automatic, 59.4}},
+WindowSize->{693.6, 1119},
+WindowMargins->{{Automatic, -4.799999999999727}, {
+  Automatic, 21.599999999999998`}},
+TaggingRules-><|"TryRealOnly" -> False|>,
 FrontEndVersion->"14.1 for Microsoft Windows (64-bit) (July 16, 2024)",
 StyleDefinitions->"Default.nb",
 ExpressionUUID->"6ebfed41-552e-e84c-8a33-89e7e27afc06"
@@ -36,9 +1588,76 @@ CellTagsIndex->{}
 *)
 (*NotebookFileOutline
 Notebook[{
+Cell[CellGroupData[{
+Cell[576, 22, 202, 3, 43, "Subsubsection",ExpressionUUID->"5f67b426-e98e-be4c-ae5d-5650d0684377"],
+Cell[781, 27, 987, 31, 66, "Input",ExpressionUUID->"0ec2b027-19b9-4543-8109-290b124b695e"],
+Cell[CellGroupData[{
+Cell[1793, 62, 539, 13, 66, "Input",ExpressionUUID->"583432b8-e6b0-f34c-a68a-3ff9f76ea590"],
+Cell[2335, 77, 902, 26, 55, "Output",ExpressionUUID->"0336877c-6c94-2247-b91a-6053064c8eba"],
+Cell[3240, 105, 198, 3, 32, "Output",ExpressionUUID->"307a484c-c848-4d4c-8bf5-b158f11bc35c"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[3475, 113, 119, 2, 38, "WolframAlphaLong",ExpressionUUID->"62afc365-37f1-8f4d-92c4-00734b50619c"],
+Cell[3597, 117, 34495, 691, 638, "Print",ExpressionUUID->"608a6648-c3a8-ce49-a81b-8a512064b904"]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[38141, 814, 165, 3, 43, "Subsubsection",ExpressionUUID->"3c5d7570-9a13-d047-b478-833e61ada207"],
+Cell[CellGroupData[{
+Cell[38331, 821, 370, 9, 28, "Input",ExpressionUUID->"2ab642dc-1bd8-274b-8266-afd25e15e868"],
+Cell[38704, 832, 255, 7, 44, "Output",ExpressionUUID->"f11443ea-cf6c-d743-8a0d-8e6bb5416936"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[38996, 844, 207, 4, 28, "Input",ExpressionUUID->"dc55b220-d823-e24b-9724-50ec593caeca"],
+Cell[39206, 850, 171, 3, 32, "Output",ExpressionUUID->"8e219eec-dc98-0244-ab85-cd058096007a"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[39414, 858, 1274, 35, 123, "Input",ExpressionUUID->"2c2a6bd1-8280-3047-93cc-8fed4ecd2c6f"],
+Cell[40691, 895, 1035, 29, 55, "Output",ExpressionUUID->"542780a0-ad2e-cd46-a0a0-120bdd8e0641"],
+Cell[41729, 926, 329, 6, 32, "Output",ExpressionUUID->"553d4edb-5cac-2042-84de-8d029f6ed470"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[42095, 937, 528, 15, 47, "Input",ExpressionUUID->"94c4f965-95a1-c549-b4e7-6e8585137e2c"],
+Cell[42626, 954, 552, 17, 56, "Output",ExpressionUUID->"f2c978e3-3d98-c249-883c-9e45812fc348"],
+Cell[43181, 973, 189, 4, 32, "Output",ExpressionUUID->"09609923-c5d6-354f-b9b3-a2327898faa8"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[43407, 982, 737, 22, 47, "Input",ExpressionUUID->"be67a5ee-275a-334e-b564-8ace21172918"],
+Cell[44147, 1006, 278, 7, 47, "Output",ExpressionUUID->"e812a94e-f8c3-5a45-85f7-962d1134f9ab"],
+Cell[44428, 1015, 199, 3, 32, "Output",ExpressionUUID->"21e4ff80-5ba9-4c44-96c5-35c116794521"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[44664, 1023, 336, 8, 28, "Input",ExpressionUUID->"ce4a9108-9c5d-1945-9bd6-8cffdfd18be7"],
+Cell[45003, 1033, 154, 3, 32, "Output",ExpressionUUID->"ecaf7086-5805-674c-b506-baa888549c85"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[45194, 1041, 684, 19, 47, "Input",ExpressionUUID->"50cafec0-cb72-844c-8a55-0418feb82354"],
+Cell[45881, 1062, 571, 17, 57, "Output",ExpressionUUID->"6f6f052c-f2e9-a84c-88a6-b3a45d82d852"],
+Cell[46455, 1081, 189, 4, 32, "Output",ExpressionUUID->"249c14d5-fa6d-2843-89bf-c1cc75490263"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[46681, 1090, 488, 13, 28, "Input",ExpressionUUID->"7a244d26-068b-d34f-96aa-28b133f596f2"],
+Cell[47172, 1105, 317, 8, 47, "Output",ExpressionUUID->"2d51930b-cc7d-1a47-b1ea-8691a8def6cd"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[47526, 1118, 376, 10, 28, "Input",ExpressionUUID->"3ad69f6d-b3e6-4c47-a723-7e7bbdcd827e"],
+Cell[47905, 1130, 539, 17, 49, "Output",ExpressionUUID->"e920b8a3-f504-7c44-8c15-750738f0024f"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[48481, 1152, 457, 12, 28, "Input",ExpressionUUID->"91e0a2dc-d16f-c24d-a4eb-5ae1db456177"],
+Cell[48941, 1166, 394, 10, 47, "Output",ExpressionUUID->"bf5e2116-6a74-6745-acb9-e71dec9db142"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[49372, 1181, 742, 20, 47, "Input",ExpressionUUID->"29db197c-1584-8847-8cf7-e5154c145531"],
+Cell[50117, 1203, 304, 8, 49, "Output",ExpressionUUID->"e2617af5-e839-d843-bfc5-4e29d4132180"],
+Cell[50424, 1213, 197, 3, 32, "Output",ExpressionUUID->"137a9219-39db-314a-8b1c-6f6cf40ad302"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[50658, 1221, 388, 10, 28, "Input",ExpressionUUID->"e21b8f12-72ae-f348-beb3-68ee0f28d1b0"],
+Cell[51049, 1233, 17567, 334, 269, "Output",ExpressionUUID->"803b2ae9-f5f3-364a-ac92-cbed5d98c33c"]
+}, Open  ]]
+}, Open  ]]
 }
 ]
 *)
-
-(* End of internal cache information *)
 
