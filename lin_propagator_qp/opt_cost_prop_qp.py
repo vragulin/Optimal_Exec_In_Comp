@@ -1,5 +1,6 @@
 """
 Miminize cost function given b
+Add a regularizzation term (it will be useful for the equilibrium)
 """
 import numpy as np
 from numpy.linalg import norm
@@ -17,6 +18,7 @@ sys.path.append(os.path.abspath(os.path.join(current_dir, '..', 'optimizer_qp'))
 import fourier as fr
 from propagator import cost_fn_prop_a_approx, cost_fn_prop_b_approx, prop_price_impact_approx
 import trading_funcs as tf
+import qp_prop_solvers as qp
 
 # Global Parameters
 N = 200  # number of Fourier terms
@@ -26,7 +28,13 @@ SIGMA = 3  # volatility of the stock -- not sure if it works with the approximat
 
 # Specify which solver to use for optimization
 SCIPY, QP = range(2)
-APPROX_SOLVER = SCIPY  # QP not yet implemented
+APPROX_SOLVER = QP  # QP not yet implemented
+
+# Regulatization
+# UNIFORM, SINE_WAVE = range(2)
+# SAMPLE_TYPE = UNIFORM  # In SciPy be careful with SIN_WAVE, it checks a lot of points! QP does not care
+# REG_PARAMS = {'range': [0.05, 0.95], 'factor': 0.05,
+#               'type': UNIFORM, 'n_sample': N, 'pts_per_semiwave': 3}
 
 # Plot settings
 N_PLOT_POINTS = 100  # number of points for plotting
@@ -120,8 +128,8 @@ class CostFunction:
 
         # Bottom chart
         ax = axs[1]
-        a_dot = [fr.reconstruct_deriv_from_sin(t, opt_coeffs) + 1 for t in t_values]
-        b_dot = [self.lambd * (fr.reconstruct_deriv_from_sin(t, self.b_coeffs) + 1) for t in t_values]
+        # a_dot = [fr.reconstruct_deriv_from_sin(t, opt_coeffs) + 1 for t in t_values]
+        # b_dot = [self.lambd * (fr.reconstruct_deriv_from_sin(t, self.b_coeffs) + 1) for t in t_values]
         dp = [prop_price_impact_approx(t, opt_coeffs, self.b_coeffs, self.lambd, self.rho) for t in t_values]
 
         ax.set_title(f'Temporary Price Impact', fontsize=11)
@@ -145,7 +153,8 @@ class CostFunction:
             res = minimize(self.compute, init_guess)
             return res.x, res
         elif solver == QP:
-            raise NotImplementedError("Quadratic programming solver not yet implemented")
+            print("Using QP solver")
+            return qp.min_cost_A_qp(self.b_coeffs, self.rho, self.lambd)
         else:
             raise ValueError("Unknown solver")
 

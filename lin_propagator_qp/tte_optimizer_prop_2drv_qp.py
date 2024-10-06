@@ -1,6 +1,7 @@
 """  Numerically solving for the two-trader equilibrium
      Implements 2 contstraints:  overbuying and short selling for both traders.
-     Incorporate a regularization term to prenalize high second derivatge in the middle of the range
+     Incorporate a regularization term to prenalize high second derivatge in the middle of the range.
+     Implements QP solver for optimization.
 """
 import numpy as np
 from scipy.optimize import minimize
@@ -10,7 +11,7 @@ from typing import Any, List, Dict
 import os
 import sys
 import pickle
-import config_prop as cfg
+import config_prop_qp as cfg
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.abspath(os.path.join(CURRENT_DIR, '..', 'cost_function')))
@@ -19,20 +20,20 @@ import trading_funcs as tf
 import cost_function_approx as ca
 import fourier as fr
 import propagator as pp
-import qp_solvers as qp
+import qp_prop_solvers as qp
 from sampling import sample_sine_wave
 
 # Parameters and Constants
-LAMBD = 100  # sixe of Trader B
-RHO = 10  # propagator decay
-N = 30  # number of Fourier Terms
-GAMMA = 0.1  # Fraction of the way to move towards the new solution (float e.g. 1.0)
+LAMBD = 20  # sixe of Trader B
+RHO = 2  # propagator decay
+N = 200  # number of Fourier Terms
+GAMMA = 0.05  # Fraction of the way to move towards the new solution (float e.g. 1.0)
 KAPPA = 10  # Parameter for the equilibrium strategy benchmark (permanent impact)
-MAX_ITER = 10
+MAX_ITER = 1000  # Maximum number of iterations
 
 TOL_COEFFS = 1e-4
 TOL_COSTS = TOL_COEFFS
-MAX_ABS_COST = 1e3
+MAX_ABS_COST = 1e4
 N_PLOT_POINTS = 12
 N_ITER_LINES = 4
 
@@ -41,25 +42,27 @@ INCLUDE_SUPTITLE = False
 LABEL_OFFSET_MULT = 0.09
 TO_HIGHLIGHT_FREQ = 50
 N_COEFFS_TO_PRINT = 4
-DEFAULT_N = 15
 
 # Specify which solver to use for optimization
 SCIPY, QP = range(2)
-SOLVER = SCIPY
+SOLVER = QP
 
 # Regularization parameters
-REG_FACTOR_MOVE = 0  # 1 / np.sqrt(N)
-REG_MOVE_INCREASE = 0  # 0.02
-REG_FACTOR_WIGGLE = 0  # 0.1 / N  # 0.1 / N  # 1/(N*N)  # 0.05
-WIGGLE_FILTER = 0  # How many terms to exclude from the wiggle regularization
-WIGGLE_INCREASE = 0.00  # by how much, in percent, increase wiggle reg factor every iteration
-MAX_OTHER_COST_INC = 0.025  # Increase in the other cost function in relative terms
-MAX_ITER_NEW_STATE = MAX_ITER // 10
-
 UNIFORM, SINE_WAVE = range(2)
-SAMPLE_TYPE = UNIFORM
-CONVEXITY_REG = {'range': [0.05, 0.95], 'factor': 0.05,
-                 'type': UNIFORM, 'n_sample': N, 'pts_per_semiwave': None}
+REG_PARAMS = {
+    '2nd_deriv': {
+        'range': [0.05, 0.95],
+        'factor': 0.00001,
+        'factor_inc_rel': 0.001,
+        'type': UNIFORM,
+        'n_sample': N,
+        'pts_per_semiwave': 3
+    },
+    'iter_adjustment': {
+        'max_other_cost_inc': 0.03,
+        'max_iter_line_search': MAX_ITER // 10
+    }
+}
 
 # Initialize codes for the traders (like an enum)
 TRADER_A, TRADER_B = range(2)
@@ -83,7 +86,7 @@ class State:
         assert self.rho > 0, "The propagator decay parameter rho must be positive"
 
         # Read initial strategy coefficients
-        N = kwargs.get('N', DEFAULT_N)
+        N = kwargs.get('N', 15)
         a_coeff = kwargs.get('a_coeff', None)
         b_coeff = kwargs.get('b_coeff', None)
 
@@ -101,8 +104,7 @@ class State:
             self.a_cost = None
             self.b_cost = None
 
-        self.reg_factor = kwargs.get("reg_factor", REG_FACTOR_MOVE)
-        self.wiggle_factor = kwargs.get("wiggle_factor", REG_FACTOR_WIGGLE)
+        self.reg_params = kwargs.get("reg_params", None)
 
         # Store precomputed variables to speed up the optimization
         self._precomp = {}
@@ -139,9 +141,8 @@ class State:
             N=kwargs.get('N', self.N),
             a_coeff=kwargs.get('a_coeff', self.a_coeff),
             b_coeff=kwargs.get('b_coeff', self.b_coeff),
-            reg_factor=kwargs.get('reg_factor', self.reg_factor),
-            wiggle_factor=kwargs.get('wiggle_factor', self.wiggle_factor),
-            calc_costs=kwargs.get('calc_costs', True)
+            calc_costs=kwargs.get('calc_costs', True),
+            reg_params=kwargs.get('reg_params', self.reg_params)
         )
 
         # Overwrite any additional attributes provided in kwargs
@@ -188,8 +189,6 @@ class State:
             f"lambda = {self.lambd},\t"
             f"rho = {self.rho},\t"
             f"gamma = {self.gamma},\t"
-            # f"reg_factor = {self.reg_factor:.4f},\t"
-            # f"wiggle_factor = {self.wiggle_factor:.4f},\t"
             f"n = {self.N},\t"
             f"reg_adj = {self._reg_adj:.4f}"
         )
@@ -206,86 +205,89 @@ class State:
             result = minimize(cost_function, init_guess, args=args, method='SLSQP')
             opt_coeff = result.x
         else:
-            raise NotImplementedError("Only SCIPY solver is implemented")
-            # opt_coeff, result = self._minimize_cost_qp(solve)
+            opt_coeff, result = self._minimize_cost_qp(solve)
 
-        print(f"Optimization time = {(time.time() - start_time):.4f}s")
+        print(f"\nUpdated {'A' if solve == TRADER_A else 'B'}:, "
+              f"Solve time = {(time.time() - start_time):.4f}s")
+        if SOLVER == QP:
+            print(f"Frob norms: N(P) = {np.linalg.norm(result['P']):.2f}, "
+                  f"N(dP) = {np.linalg.norm(result['dP']):.2f}")
 
         # Generate a new updated state
         res_state = self._generate_new_state(solve, opt_coeff)
         res_state.a_cost = pp.cost_fn_prop_a_approx(res_state.a_coeff, res_state.b_coeff, self.lambd, self.rho)
         res_state.b_cost = pp.cost_fn_prop_b_approx(res_state.a_coeff, res_state.b_coeff, self.lambd, self.rho)
 
-        # Update reg_factor for the next iteration
-        res_state.reg_factor *= (1 + REG_MOVE_INCREASE)
-        res_state.wiggle_factor *= (1 + WIGGLE_INCREASE)
-        ITER_SO_FAR += 1
+        if solve == TRADER_B:
+            ITER_SO_FAR += 1
         return res_state
 
-    def reg_term(self, x, x_prev):
+    def reg_term(self, x, x_prev, solve):
         n = np.arange(1, len(x) + 1)
-
-        f = 0
-        # Promimal point regularization
-        if self.reg_factor != 0:
-            y1 = np.linalg.norm(x - x_prev) * self.reg_factor
-            f += np.exp(y1) - (1 + y1)
-
-            # Wiggle regularization
-        if self.wiggle_factor != 0:
-            x_f = x.copy()
-            if len(x) > WIGGLE_FILTER:
-                x_f[:WIGGLE_FILTER] = 0
-            y2 = np.linalg.norm(x_f * n) * self.wiggle_factor
-            f += y2
-
+        pi = np.pi
         # Convexity in the middle of the range
-        if CONVEXITY_REG is not None:
-            sample_type = CONVEXITY_REG.get('type', UNIFORM)
-            cvx_rng_ = CONVEXITY_REG['range']
-            factor = CONVEXITY_REG['factor'] * (1 + ITER_SO_FAR / 200)
+        if self.reg_params.get('2nd_deriv') is not None:
+            factor = self.curr_factor(ITER_SO_FAR)
             if factor > 0:
-                # Sample points
-                if self._t_sample is None:
-                    if 'n_sample' in CONVEXITY_REG:
-                        full_sample = np.arange(0, 1, 1 / CONVEXITY_REG['n_sample'])
-                    else:
-                        full_sample = sample_sine_wave(list(range(1, len(x) + 1)),
-                                                       CONVEXITY_REG['pts_per_semiwave'])
-                    self._t_sample = [t for t in full_sample if cvx_rng_[0] <= t <= cvx_rng_[1]]
-                    self._sin_values = np.sin(np.pi * np.array(self._t_sample)[:, None] @ n[None, :])
+                if self._t_sample is None:  # Sample points at which we check the 2nd derivative
+                    _ = self._calc_t_sample()
+                    self._sin_values = np.sin(pi * np.array(self._t_sample)[:, None] @ n[None, :])
                     self._sin_x_nsq = self._sin_values * n ** 2
 
-                second_derivs = self._sin_x_nsq @ x
-                f += factor * np.linalg.norm(second_derivs) / np.sqrt(len(self._t_sample)) / (len(x) ** 2)
-                # print(f"Convexity term = {f:.4f}")
+                second_derivs = - pi * pi * self._sin_x_nsq @ x
+                f = factor * (second_derivs.T @ second_derivs) / len(self._t_sample) / len(x) ** 3
+                f *= (self.lambd ** 2 if solve == TRADER_B else 1)
                 self._reg_adj = f
         return f
+
+    def _calc_t_sample(self, force_recalc: bool = False) -> np.ndarray:
+        if self._t_sample is None or force_recalc:
+            cvx = self.reg_params.get('2nd_deriv')
+            if cvx is not None:
+                sample_type = cvx.get('type', UNIFORM)
+                if sample_type == UNIFORM:
+                    n_sample = cvx.get('n_sample', self.N)
+                    full_sample = np.arange(0, 1, 1 / n_sample)
+                else:
+                    full_sample = sample_sine_wave(list(range(1, len(self.a_coeff) + 1)),
+                                                   cvx.get('pts_per_semiwave', 3))
+                self._t_sample = np.array([t for t in full_sample if cvx['range'][0] <= t <= cvx['range'][1]])
+        return self._t_sample
 
     def _get_cost_function_and_guess(self, solve: int):
         if solve == TRADER_A:
             return (
                 lambda x, a_coeff, b_coeff: pp.cost_fn_prop_a_approx(x, b_coeff, self.lambd, self.rho)
-                                            + self.reg_term(x, a_coeff),
+                                            + self.reg_term(x, a_coeff, solve),
                 self.a_coeff
             )
         else:
             return (
                 lambda x, a_coeff, b_coeff: pp.cost_fn_prop_b_approx(a_coeff, x, self.lambd, self.rho)
-                                            + self.reg_term(x, b_coeff) * self.lambd,
+                                            + self.reg_term(x, b_coeff, solve),
                 self.b_coeff
             )
 
     def _generate_new_state(self, solve: int, opt_coeff: np.ndarray) -> "State":
         n_iter = 0
-        max_cost_increase = MAX_OTHER_COST_INC * np.maximum(
+        try:
+            max_other_cost_inc = self.reg_params['iter_adjustment']['max_other_cost_inc']
+        except KeyError:
+            max_other_cost_inc = np.finfo(float).max
+
+        try:
+            max_iter_new_state = self.reg_params['iter_adjustment']['max_iter_line_search']
+        except KeyError:
+            max_iter_new_state = 0
+
+        max_cost_increase = max_other_cost_inc * np.maximum(
             np.abs(self.b_cost), np.abs(self.a_cost) * self.lambd)
         if solve == TRADER_A:
             a_coeff_new = opt_coeff * self.gamma + self.a_coeff * (1 - self.gamma)
-            if MAX_OTHER_COST_INC is None:
+            if max_other_cost_inc is None:
                 return self.copy(a_coeff=a_coeff_new, b_coeff=self.b_coeff, calc_costs=False)
             else:
-                while n_iter <= MAX_ITER_NEW_STATE:
+                while n_iter <= max_iter_new_state:
                     new_state = self.copy(a_coeff=a_coeff_new, b_coeff=self.b_coeff, calc_costs=False)
                     new_state.b_cost = pp.cost_fn_prop_b_approx(new_state.a_coeff, new_state.b_coeff, self.lambd,
                                                                 self.rho)
@@ -293,14 +295,14 @@ class State:
                         return new_state
                     else:
                         a_coeff_new = self.a_coeff + (a_coeff_new - self.a_coeff) \
-                                      * np.abs(self.b_cost) * MAX_OTHER_COST_INC / (new_state.b_cost - self.b_cost)
+                                      * np.abs(self.b_cost) * max_other_cost_inc / (new_state.b_cost - self.b_cost)
                         n_iter += 1
         else:
             b_coeff_new = opt_coeff * self.gamma + self.b_coeff * (1 - self.gamma)
-            if MAX_OTHER_COST_INC is None:
+            if max_other_cost_inc is None:
                 return self.copy(a_coeff=self.a_coeff, b_coeff=b_coeff_new, calc_costs=False)
             else:
-                while n_iter <= MAX_ITER_NEW_STATE:
+                while n_iter <= max_iter_new_state:
                     new_state = self.copy(a_coeff=self.a_coeff, b_coeff=b_coeff_new, calc_costs=False)
                     new_state.a_cost = pp.cost_fn_prop_a_approx(new_state.a_coeff, new_state.b_coeff, self.lambd,
                                                                 self.rho)
@@ -308,21 +310,36 @@ class State:
                         return new_state
                     else:
                         b_coeff_new = self.b_coeff + (b_coeff_new - self.b_coeff) \
-                                      * np.abs(self.a_cost) * MAX_OTHER_COST_INC / (new_state.a_cost - self.a_cost)
+                                      * np.abs(self.a_cost) * max_other_cost_inc / (new_state.a_cost - self.a_cost)
                         n_iter += 1
 
         return new_state
 
-    # def _minimize_cost_qp(self, solve):
-    #     # Precalculate matrices and vectors for the optimization
-    #     _ = qp.precalc_obj_func_constants(self.N, self._precomp)
-    # 
-    #     if solve == TRADER_A:
-    #         return qp.min_cost_A_qp(self.b_coeff, self.rho, self.lambd, abs_tol=TOL_COEFFS,
-    #                                 precomp=self._precomp)
-    #     else:
-    #         return qp.min_cost_B_qp(self.a_coeff, self.rho, self.lambd, abs_tol=TOL_COEFFS,
-    #                                 precomp=self._precomp)
+    def curr_factor(self, iter_so_far: int) -> float:
+        factor_inc_rel = self.reg_params['2nd_deriv'].get('factor_inc_rel', 0)
+        factor = self.reg_params['2nd_deriv']['factor']
+        return factor * (1 + factor_inc_rel * iter_so_far)
+
+    def _minimize_cost_qp(self, solve):
+        # Precalculate matrices and vectors for the optimization
+        _ = qp.precalc_obj_func_constants(self.N, self._precomp)
+        self.reg_params.update({'t_sample': self._calc_t_sample()})
+        self._precomp.update({'W': qp.reg_adjustment(self.b_coeff, self._precomp, self.reg_params)})
+
+        if solve == TRADER_A:
+            res = qp.min_cost_A_qp(self.b_coeff, self.rho, self.lambd, abs_tol=TOL_COEFFS,
+                                   precomp=self._precomp, reg_params=self.reg_params,
+                                   factor=self.curr_factor(ITER_SO_FAR))
+        else:
+            res = qp.min_cost_B_qp(self.a_coeff, self.rho, self.lambd, abs_tol=TOL_COEFFS,
+                                   precomp=self._precomp, reg_params=self.reg_params,
+                                   factor=self.curr_factor(ITER_SO_FAR))
+
+        # Record the value of the regularization adjustment
+        dP = res[1]['dP'] * (self.lambd ** 2 if solve == TRADER_B else 1)
+        opt_coeff = res[0]
+        self._reg_adj = 0.5 * opt_coeff.T @ dP @ opt_coeff
+        return res
 
     def plot_solution_strategies(self, iter_hist: List["State"], ax: Any) -> Dict[str, Any]:
         """Check the solution against theoretical values.
@@ -466,9 +483,9 @@ def load_pickled_results() -> Any:
 
 def main():
     # Initialize state
-    state = State(N=N, rho=RHO, lambd=LAMBD, gamma=GAMMA, kappa=KAPPA)
+    state = State(N=N, rho=RHO, lambd=LAMBD, gamma=GAMMA, kappa=KAPPA, reg_params=REG_PARAMS)
     print("\nStarting Optimizatin, Solver = " +
-          f"{'QP' if SOLVER == 'QP' else 'SCIPY'}\n" +
+          f"{'QP' if SOLVER == QP else 'SCIPY'}\n" +
           "Initial State: ")
     print(state)
 

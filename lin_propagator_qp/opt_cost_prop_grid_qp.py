@@ -17,16 +17,18 @@ sys.path.append(os.path.abspath(os.path.join(current_dir, '..', 'optimizer_qp'))
 import fourier as fr
 from propagator import cost_fn_prop_a_approx, prop_price_impact_approx
 import trading_funcs as tf
+import qp_prop_solvers as qp
+import time
 
 # Global Parameters
-N = 200  # number of Fourier terms
-RHO = 10  # propagator decay
-LAMBD = 5  # size of trader B
-SIGMA = 3  # volatility of the stock -- not sure if it works with the approximate cost function
+# N = 15  # number of Fourier terms
+# RHO = 10  # propagator decay
+# LAMBD = 5  # size of trader B
+# SIGMA = 3  # volatility of the stock -- not sure if it works with the approximate cost function
 
 # Specify which solver to use for optimization
 SCIPY, QP = range(2)
-APPROX_SOLVER = SCIPY  # QP not yet implemented
+SOLVER = SCIPY  # QP not yet implemented
 
 # Plot settings
 N_PLOT_POINTS = 100  # number of points for plotting
@@ -162,14 +164,16 @@ def plot_curves_grid(rho_values, init_guess, opt_coeffs, c):
     plt.show()
 
 
-def solve_min_cost(c: CostFunction, init_guess: np.ndarray) -> Tuple[np.ndarray, Any]:
+def solve_min_cost(self, init_guess: np.ndarray, **kwargs) -> Tuple[np.ndarray, Any]:
     """ Solve for the optimal cost function using the solver specified """
-    if APPROX_SOLVER == SCIPY:
+    solver = kwargs.get('solver', SCIPY)
+    if solver == SCIPY:
         print("Using SciPy solver")
-        res = minimize(c.compute, init_guess)
+        res = minimize(self.compute, init_guess)
         return res.x, res
-    elif APPROX_SOLVER == QP:
-        raise NotImplementedError("Quadratic programming solver not yet implemented")
+    elif solver == QP:
+        print("Using QP solver")
+        return qp.min_cost_A_qp(self.b_coeffs, self.rho, self.lambd)
     else:
         raise ValueError("Unknown solver")
 
@@ -243,7 +247,7 @@ def plot_curves_grid(rho_values, N, LAMBD, b_func, b_func_params, b_name):
         initial_guess = np.zeros(N)
 
         # Minimize the cost function for the current RHO value
-        a_coeffs_opt, res = solve_min_cost(c, initial_guess)
+        a_coeffs_opt, res = solve_min_cost(c, initial_guess, solver=SOLVER)
 
         # Recompute the optimized curve for the new rho
         opt_curve = [fr.reconstruct_from_sin(t, a_coeffs_opt) + t for t in t_values]
@@ -279,7 +283,9 @@ def main():
     b_name = "equilibrium"
 
     # Plot curves for different RHO values in a 2x2 grid
+    start = time.time()
     plot_curves_grid(RHO_VALUES, N, LAMBD, b_func, b_func_params, b_name)
+    print(f"Total time = {(time.time() - start):.4f}s")
 
 
 if __name__ == "__main__":

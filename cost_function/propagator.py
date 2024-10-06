@@ -130,7 +130,7 @@ def cost_fn_prop_a_approx(a_n: np.ndarray, b_n: np.ndarray, lambd, rho, verbose=
     """
     # ToDo - add logic to precompute the constants and pass them via kwargs
 
-    pi, sin, cos, exp = np.pi, np.sin, np.cos, np.exp
+    pi, exp = np.pi, np.exp
 
     # Constants (later can be precomputed)
     n = np.arange(1, len(a_n) + 1)
@@ -193,3 +193,60 @@ def cost_fn_prop_b_approx(a_n: np.ndarray, b_n: np.ndarray, lambd, rho, verbose=
     :return: The value of the cost function.
     """
     return lambd ** 2 * cost_fn_prop_a_approx(b_n, a_n, 1/lambd, rho, verbose, **kwargs)
+
+
+def cost_fn_prop_a_matrix(a_n: np.ndarray, b_n: np.ndarray, lambd, rho, verbose=False, **kwargs):
+    """
+    The matrix version of the cost function.
+    Compute the exact value of the cost function of Trader A for the given Fourier coefficients
+    using the analytic formula in terms of the Fourier coefficients from the Chriss(24) paper.
+
+    :param a_n: the Fourier coefficients for the a(t) function.
+    :param b_n: the Fourier coefficients for the b(t) function.
+    :param lambd: Size of trader B.
+    :param rho: Exponential decay of the propagator.
+    :param verbose: If True, print the intermediate results. Defaults to False.
+    :param kwargs: can pass precomputed values via 'precomp' key
+
+    :return: The value of the cost function.
+    """
+    pi, exp = np.pi, np.exp
+
+    # Constants (later can be precomputed)
+    n = np.arange(1, len(a_n) + 1)
+    N = np.diag(n).astype(float)
+    n_sq = n ** 2
+    i = np.ones(n.shape)
+    i_odd = n % 2
+    i_mp = i - 2 * i_odd
+
+    m_p_n_odd = (n[:, None] + n[None, :]) % 2
+    msq_nsq = n_sq[:, None] - n_sq[None, :]
+    with np.errstate(divide='ignore', invalid='ignore'):
+        M = 2 * np.where(m_p_n_odd, n_sq[:, None] / msq_nsq, 0)
+
+    D = np.diag(pi * n / (rho ** 2 + (n * pi) ** 2))
+
+    d = D @ (a_n + lambd * b_n)
+    K = (1 + lambd) / rho + rho * np.sum(d)
+
+    # Terms
+    t1 = (exp(-rho) - 1) / rho * K
+    t2 = 2 * d.T @ i_odd
+    t3 = (1 + lambd) / rho
+    t4 = -rho * K * a_n.T @ D @ (i - exp(-rho) * i_mp)
+    t5_1 = 0.5 * pi * rho * a_n.T @ N @ d
+    # t5_2 = pi * d.T @ M @ N @ a_n
+    t5_2 = pi * a_n.T @ N @ M.T @ d
+
+    t5 = t5_1 + t5_2
+
+    if verbose:
+        print(f"Term 1: {t1}")
+        print(f"Term 2: {t2}")
+        print(f"Term 3: {t3}")
+
+        print(f"Term 4: {t4}")
+        print(f"Term 5: {t5}, terms 5_1: {t5_1}, terms 5_2: {t5_2}")
+        print(f"Sum: {t1 + t2 + t3 + t4 + t5}")
+    return t1 + t2 + t3 + t4 + t5
