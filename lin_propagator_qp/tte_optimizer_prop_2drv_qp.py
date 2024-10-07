@@ -24,8 +24,8 @@ import qp_prop_solvers as qp
 from sampling import sample_sine_wave
 
 # Parameters and Constants
-LAMBD = 20  # sixe of Trader B
-RHO = 2  # propagator decay
+LAMBD = 1  # sixe of Trader B
+RHO = 1  # propagator decay
 N = 200  # number of Fourier Terms
 GAMMA = 0.05  # Fraction of the way to move towards the new solution (float e.g. 1.0)
 KAPPA = 10  # Parameter for the equilibrium strategy benchmark (permanent impact)
@@ -54,7 +54,7 @@ REG_PARAMS = {
         'range': [0.05, 0.95],
         'factor': 0.00001,
         'factor_inc_rel': 0.001,
-        'type': UNIFORM,
+        'type': SINE_WAVE,
         'n_sample': N,
         'pts_per_semiwave': 3
     },
