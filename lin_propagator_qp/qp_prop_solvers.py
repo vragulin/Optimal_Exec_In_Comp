@@ -25,6 +25,14 @@ T_SAMPLE_PER_SEMI_WAVE = 3
 #   to convert the leq and geq constraints to leq only.
 
 
+def is_positive_definite_cholesky(matrix):
+    try:
+        np.linalg.cholesky(matrix)
+        return True
+    except np.linalg.LinAlgError:
+        return False
+
+
 def precalc_obj_func_constants(n_coeffs: int, precomp: dict, **kwargs) -> tuple:
     """ Calculate the constants used in the objective function
         And updates values in the precomp dictionary.
@@ -38,7 +46,11 @@ def build_obj_func_qp(b_n: np.ndarray, rho: float, lambd: float,
     """ Build the matrix and vector pair P,q that describe the objective function
     """
 
-    return c2qp.cost_QP_params(b_n=b_n, lambd=lambd, rho=rho)
+    res = c2qp.cost_QP_params(b_n=b_n, lambd=lambd, rho=rho)
+
+    if kwargs.get('check_pos_def', False):
+        assert is_positive_definite_cholesky(res[0]), "The matrix P is not positive definite"
+    return res
 
 
 def reg_adjustment(b_n: np.ndarray, precomp: dict, reg_params: dict,
@@ -46,8 +58,8 @@ def reg_adjustment(b_n: np.ndarray, precomp: dict, reg_params: dict,
     """ Add regularization to the Hessian matrix P
     """
     p, pi, sin = precomp, np.pi, np.sin
-    if reg_params is None:
-            return 0
+    if (reg_params is None) or (reg_params.get('2nd_deriv') is None):
+        return 0
 
     if p == {}:
         t_sample = reg_params['t_sample']
@@ -57,9 +69,9 @@ def reg_adjustment(b_n: np.ndarray, precomp: dict, reg_params: dict,
         N_sq = np.diag(n_sq)
         n_tau = t_sample[:, None] @ n[None, :]
         sin_n_tau = sin(pi * n_tau)
-        a_ddot_mult = -pi *pi * sin_n_tau @ N_sq
+        a_ddot_mult = -pi * pi * sin_n_tau @ N_sq
         W = a_ddot_mult.T @ a_ddot_mult
-        W /= 0.5 * len(t_sample) * len(b_n) ** 3 # Rescale for # of terms, sample size
+        W /= 0.5 * len(t_sample) * len(b_n) ** 3  # Rescale for # of terms, sample size
     else:
         W = p['W']
     return W

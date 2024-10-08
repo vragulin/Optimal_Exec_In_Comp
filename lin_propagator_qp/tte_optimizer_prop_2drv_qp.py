@@ -24,17 +24,17 @@ import qp_prop_solvers as qp
 from sampling import sample_sine_wave
 
 # Parameters and Constants
-LAMBD = 1  # sixe of Trader B
-RHO = 1  # propagator decay
+LAMBD = 20  # sixe of Trader B
+RHO = 2  # propagator decay
 N = 200  # number of Fourier Terms
-GAMMA = 0.05  # Fraction of the way to move towards the new solution (float e.g. 1.0)
+GAMMA = 0.5  # Fraction of the way to move towards the new solution (float e.g. 1.0)
 KAPPA = 10  # Parameter for the equilibrium strategy benchmark (permanent impact)
-MAX_ITER = 1000  # Maximum number of iterations
+MAX_ITER = 20000  # Maximum number of iterations
 
-TOL_COEFFS = 1e-4
+TOL_COEFFS = 1e-6
 TOL_COSTS = TOL_COEFFS
 MAX_ABS_COST = 1e4
-N_PLOT_POINTS = 12
+N_PLOT_POINTS = 100
 N_ITER_LINES = 4
 
 LINE_STYLES = ['-', '--', '-.', ':', (0, (3, 1, 1, 1))]
@@ -49,19 +49,22 @@ SOLVER = QP
 
 # Regularization parameters
 UNIFORM, SINE_WAVE = range(2)
+# REG_PARAMS = {};
 REG_PARAMS = {
-    '2nd_deriv': {
-        'range': [0.05, 0.95],
-        'factor': 0.00001,
-        'factor_inc_rel': 0.001,
-        'type': SINE_WAVE,
-        'n_sample': N,
-        'pts_per_semiwave': 3
-    },
+    # '2nd_deriv': {
+    #     'range': [0.05, 0.95],
+    #     'factor': 0.00000,
+    #     'factor_inc_rel': 0.000,
+    #     'type': UNIFORM,
+    #     'n_sample': N,
+    #     'pts_per_semiwave': 3
+    # },
     'iter_adjustment': {
-        'max_other_cost_inc': 0.03,
-        'max_iter_line_search': MAX_ITER // 10
-    }
+        'max_other_cost_inc': 0.025,
+        'max_iter_line_search': min(MAX_ITER // 10, 20)
+    },
+    'gamma_decay': 0.0007
+    # Half-life = ln(2) / gamma_decay
 }
 
 # Initialize codes for the traders (like an enum)
@@ -69,7 +72,7 @@ TRADER_A, TRADER_B = range(2)
 
 # Parameters to save simulation results
 SAVE_RESULTS = True
-DATA_FILE_SUFFIX = f"_g{GAMMA}"
+DATA_FILE_SUFFIX = ""
 ITER_SO_FAR = 0
 
 
@@ -113,6 +116,9 @@ class State:
         self._sin_x_nsq = None
         self._reg_adj = 0
         self._n_iter = 0
+        self._curr_gamma = self.gamma * np.exp(- REG_PARAMS['gamma_decay'] * ITER_SO_FAR)
+        self._tol_costs = -1
+        self._tol_coeffs = -1
 
     @staticmethod
     def _initialize_n(a_coeff: np.ndarray, b_coeff: np.ndarray, n: int) -> int:
@@ -156,6 +162,8 @@ class State:
         new_state._t_sample = self._t_sample
         new_state._sin_values = self._sin_values
         new_state._sin_x_nsq = self._sin_x_nsq
+        new_state._tol_costs = self._tol_costs
+        new_state._tol_coeffs = self._tol_coeffs
 
         return new_state
 
@@ -171,6 +179,9 @@ class State:
         # Calculate max absolute difference for a_cost and b_cost
         a_cost_diff = abs(self.a_cost - other.a_cost) if self.a_cost is not None and other.a_cost is not None else 0
         b_cost_diff = abs(self.b_cost - other.b_cost) if self.b_cost is not None and other.b_cost is not None else 0
+
+        self._tol_coeffs = np.maximum(a_coeff_diff, b_coeff_diff)
+        self._tol_costs = np.maximum(a_cost_diff, b_cost_diff)
 
         # Check if differences are within tolerances
         return (a_coeff_diff < TOL_COEFFS and b_coeff_diff < TOL_COEFFS and
@@ -189,8 +200,11 @@ class State:
             f"lambda = {self.lambd},\t"
             f"rho = {self.rho},\t"
             f"gamma = {self.gamma},\t"
+            f"curr_gamma = {self._curr_gamma:.4f},\t"
             f"n = {self.N},\t"
-            f"reg_adj = {self._reg_adj:.4f}"
+            f"reg_adj = {self._reg_adj:.4f}\n"
+            f"tol_coeffs = {self._tol_coeffs:.8f},\t"
+            f"tol_costs = {self._tol_costs:.8f}"
         )
 
     def update(self, solve: int) -> "State":
@@ -224,34 +238,66 @@ class State:
 
     def reg_term(self, x, x_prev, solve):
         n = np.arange(1, len(x) + 1)
-        pi = np.pi
-        # Convexity in the middle of the range
+        pi, f = np.pi, 0
+
+        # Check if 2nd derivative regularization is enabled
         if self.reg_params.get('2nd_deriv') is not None:
             factor = self.curr_factor(ITER_SO_FAR)
+
             if factor > 0:
-                if self._t_sample is None:  # Sample points at which we check the 2nd derivative
-                    _ = self._calc_t_sample()
+                # Calculate sample points if not already done
+                if self._t_sample is None:
+                    self._calc_t_sample()
                     self._sin_values = np.sin(pi * np.array(self._t_sample)[:, None] @ n[None, :])
                     self._sin_x_nsq = self._sin_values * n ** 2
 
-                second_derivs = - pi * pi * self._sin_x_nsq @ x
-                f = factor * (second_derivs.T @ second_derivs) / len(self._t_sample) / len(x) ** 3
+                # Calculate second derivatives
+                second_derivs = -pi * pi * self._sin_x_nsq @ x
+
+                # Compute regularization term
+                f = factor * (second_derivs.T @ second_derivs) / (len(self._t_sample) * len(x) ** 3)
                 f *= (self.lambd ** 2 if solve == TRADER_B else 1)
-                self._reg_adj = f
+
+        self._reg_adj = f  # Record the value of the regularization adjustment
         return f
 
+    # def _calc_t_sample(self, force_recalc: bool = False) -> np.ndarray:
+    #     if self._t_sample is None or force_recalc:
+    #         cvx = self.reg_params.get('2nd_deriv')
+    #         if cvx is not None:
+    #             sample_type = cvx.get('type', UNIFORM)
+    #             if sample_type == UNIFORM:
+    #                 n_sample = cvx.get('n_sample', self.N)
+    #                 full_sample = np.arange(0, 1, 1 / n_sample)
+    #             else:
+    #                 full_sample = sample_sine_wave(list(range(1, len(self.a_coeff) + 1)),
+    #                                                cvx.get('pts_per_semiwave', 3))
+    #             self._t_sample = np.array([t for t in full_sample if cvx['range'][0] <= t <= cvx['range'][1]])
+    #     return self._t_sample
+
     def _calc_t_sample(self, force_recalc: bool = False) -> np.ndarray:
+        # Recalculate sample points if needed
         if self._t_sample is None or force_recalc:
             cvx = self.reg_params.get('2nd_deriv')
+
             if cvx is not None:
                 sample_type = cvx.get('type', UNIFORM)
+
+                # Generate full sample based on sampling type
                 if sample_type == UNIFORM:
                     n_sample = cvx.get('n_sample', self.N)
                     full_sample = np.arange(0, 1, 1 / n_sample)
                 else:
-                    full_sample = sample_sine_wave(list(range(1, len(self.a_coeff) + 1)),
-                                                   cvx.get('pts_per_semiwave', 3))
-                self._t_sample = np.array([t for t in full_sample if cvx['range'][0] <= t <= cvx['range'][1]])
+                    full_sample = sample_sine_wave(
+                        list(range(1, len(self.a_coeff) + 1)),
+                        cvx.get('pts_per_semiwave', 3)
+                    )
+
+                # Filter sample points within the specified range
+                self._t_sample = np.array([
+                    t for t in full_sample if cvx['range'][0] <= t <= cvx['range'][1]
+                ])
+
         return self._t_sample
 
     def _get_cost_function_and_guess(self, solve: int):
@@ -273,7 +319,7 @@ class State:
         try:
             max_other_cost_inc = self.reg_params['iter_adjustment']['max_other_cost_inc']
         except KeyError:
-            max_other_cost_inc = np.finfo(float).max
+            max_other_cost_inc = None
 
         try:
             max_iter_new_state = self.reg_params['iter_adjustment']['max_iter_line_search']
@@ -281,9 +327,10 @@ class State:
             max_iter_new_state = 0
 
         max_cost_increase = max_other_cost_inc * np.maximum(
-            np.abs(self.b_cost), np.abs(self.a_cost) * self.lambd)
+            np.abs(self.b_cost), np.abs(self.a_cost) * self.lambd
+        ) if max_other_cost_inc else None
         if solve == TRADER_A:
-            a_coeff_new = opt_coeff * self.gamma + self.a_coeff * (1 - self.gamma)
+            a_coeff_new = opt_coeff * self._curr_gamma + self.a_coeff * (1 - self._curr_gamma)
             if max_other_cost_inc is None:
                 return self.copy(a_coeff=a_coeff_new, b_coeff=self.b_coeff, calc_costs=False)
             else:
@@ -294,11 +341,12 @@ class State:
                     if new_state.b_cost - self.b_cost <= max_cost_increase:
                         return new_state
                     else:
-                        a_coeff_new = self.a_coeff + (a_coeff_new - self.a_coeff) \
-                                      * np.abs(self.b_cost) * max_other_cost_inc / (new_state.b_cost - self.b_cost)
+                        # a_coeff_new = self.a_coeff + (a_coeff_new - self.a_coeff) \
+                        #               * np.abs(self.b_cost) * max_other_cost_inc / (new_state.b_cost - self.b_cost)
+                        a_coeff_new = (self.a_coeff + a_coeff_new) / 2
                         n_iter += 1
         else:
-            b_coeff_new = opt_coeff * self.gamma + self.b_coeff * (1 - self.gamma)
+            b_coeff_new = opt_coeff * self._curr_gamma + self.b_coeff * (1 - self._curr_gamma)
             if max_other_cost_inc is None:
                 return self.copy(a_coeff=self.a_coeff, b_coeff=b_coeff_new, calc_costs=False)
             else:
@@ -309,13 +357,16 @@ class State:
                     if new_state.a_cost - self.a_cost <= max_cost_increase / self.lambd:
                         return new_state
                     else:
-                        b_coeff_new = self.b_coeff + (b_coeff_new - self.b_coeff) \
-                                      * np.abs(self.a_cost) * max_other_cost_inc / (new_state.a_cost - self.a_cost)
+                        # b_coeff_new = self.b_coeff + (b_coeff_new - self.b_coeff) \
+                        #               * np.abs(self.a_cost) * max_other_cost_inc / (new_state.a_cost - self.a_cost)
+                        b_coeff_new = (self.b_coeff + b_coeff_new) / 2
                         n_iter += 1
 
         return new_state
 
     def curr_factor(self, iter_so_far: int) -> float:
+        if (self.reg_params is None) or (self.reg_params.get('2nd_deriv') is None):
+            return 0
         factor_inc_rel = self.reg_params['2nd_deriv'].get('factor_inc_rel', 0)
         factor = self.reg_params['2nd_deriv']['factor']
         return factor * (1 + factor_inc_rel * iter_so_far)
@@ -336,9 +387,10 @@ class State:
                                    factor=self.curr_factor(ITER_SO_FAR))
 
         # Record the value of the regularization adjustment
-        dP = res[1]['dP'] * (self.lambd ** 2 if solve == TRADER_B else 1)
-        opt_coeff = res[0]
-        self._reg_adj = 0.5 * opt_coeff.T @ dP @ opt_coeff
+        if self.curr_factor(ITER_SO_FAR) != 0:
+            dP = res[1]['dP'] * (self.lambd ** 2 if solve == TRADER_B else 1)
+            opt_coeff = res[0]
+            self._reg_adj = 0.5 * opt_coeff.T @ dP @ opt_coeff
         return res
 
     def plot_solution_strategies(self, iter_hist: List["State"], ax: Any) -> Dict[str, Any]:
@@ -372,7 +424,7 @@ class State:
         n_iter = len(iter_hist) // 2
         ax.set_title("Equilibrium trading strategies for A and B\n" +
                      r"$\rho$" + f"={self.rho}, " + r"$\lambda$" + f"={self.lambd}, " +
-                     f"N={self.N}, " + r'$\gamma=$' + f'{self.gamma:.1f} :: ' +
+                     f"N={self.N}, " + r'$\gamma=$' + f'{self.gamma:.3f} :: ' +
                      f'{n_iter} solver iterations', fontsize=12)
         ax.legend()
         ax.set_xlabel('t')
@@ -419,7 +471,7 @@ class State:
 
     def plot_price_impact(self, ax: Any) -> None:
         """ Plot the price impact function for the final solution """
-        ax.set_title('Price Impact of Combined A and B Traading Over Time')
+        ax.set_title('Price Impact of Combined A and B Trading Over Time')
 
         t_values = np.linspace(0, 1, N_PLOT_POINTS)
         dp_values = [pp.prop_price_impact_approx(t, self.a_coeff, self.b_coeff, self.lambd, self.rho) for t in t_values]
@@ -448,8 +500,19 @@ def pickle_file_path(make_dirs: bool = False):
     # Define the directory and filename
     results_dir = os.path.join(CURRENT_DIR, cfg.SIM_RESULTS_DIR)
     # timestamp = datetime.now().strftime('%Y%m%d-%H%M')
+
+    if 'iter_adjustment' in REG_PARAMS:
+        other_lim = REG_PARAMS['iter_adjustment'].get('max_other_cost_inc', 0)
+        other_lim_str = str(other_lim).replace('.', '_')
+    else:
+        other_lim_str = "NA"
+
+    gamma_decay = REG_PARAMS.get('gamma_decay', 0)
+
     filename = cfg.SIM_FILE_NAME.format(
-        LAMBD=LAMBD, RHO=RHO, KAPPA=KAPPA, N=N, SUFFIX=DATA_FILE_SUFFIX)
+        LAMBD=LAMBD, RHO=RHO, OTHER_LIM=other_lim_str,
+        GAMMA=GAMMA, GAMMA_DECAY=gamma_decay, N=N, SUFFIX=DATA_FILE_SUFFIX)
+
     file_path = os.path.join(results_dir, filename)
 
     # Create the directory if it does not exist
