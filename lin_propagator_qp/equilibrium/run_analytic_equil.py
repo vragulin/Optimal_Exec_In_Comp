@@ -21,14 +21,14 @@ import fourier as fr
 # -------------------------------------------------------
 # Global parameters
 N = 200  # Dimension of the vector x
-lambd = 20
-rho = 2
+lambd = 1
+rho = 0.01
 abs_tol = 1e-6
 
 # Presentation settings
 N_COEFF_TO_PRINT = 4
 N_PLOT_POINTS = 100  # Works beest when N is a multiple of 2 * N_PLOT_POINTS
-DROP_LAST_SINES = None  # None or integer.  Use to reduce the 'wiggle'
+DROP_LAST_SINES = 5  # None or integer.  Use to reduce the 'wiggle'
 
 
 def plot_curves(a_coeffs, b_coeffs, lambd, rho, N, n_points, **kwargs) -> None:
@@ -98,6 +98,8 @@ if __name__ == "__main__":
     print(f"Number of Fourier Coeffs = {N}, printing the first {N_COEFF_TO_PRINT}")
     print("Trader A: ", a_coeff[:N_COEFF_TO_PRINT])
     print("Trader B: ", b_coeff[:N_COEFF_TO_PRINT])
+    cond = np.linalg.cond(res_solve['H'])
+    print(f"Condition Number of the FOC Matrix = {cond:.2f}")
     # a_coeff = np.zeros(N)
     # a_coeff[0] = 1
     # b_coeff = a_coeff / 2

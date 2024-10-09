@@ -123,7 +123,7 @@ def solve_equilibrium(n: int, lambd: float, rho: float) -> dict:
     # Solve for the stacked coefficients vector
     x = np.linalg.solve(H, -f)
 
-    return {'Ha': Ha, 'Ga': Ga, 'ma': ma, 'Hb': Hb, 'Gb': Gb, 'mb': mb,
+    return {'H': H, 'Ha': Ha, 'Ga': Ga, 'ma': ma, 'Hb': Hb, 'Gb': Gb, 'mb': mb,
             'a': x[:n], 'b': x[n:]}
 
 
