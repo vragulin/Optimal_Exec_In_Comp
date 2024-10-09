@@ -99,9 +99,9 @@ class CostFunction:
         s += f"b_func = {self.b_func}\n"
         return s
 
-    def plot_curves(self, init_guess: np.ndarray, opt_coeffs: np.ndarray) -> None:
+    def plot_curves(self, init_guess: np.ndarray, opt_coeffs: np.ndarray, n_points: int) -> None:
         """ Plot curves and and calc stats """
-        t_values = np.linspace(0, 1, N_PLOT_POINTS)
+        t_values = np.linspace(0, 1, n_points)
 
         init_curve = [fr.reconstruct_from_sin(t, init_guess) + t for t in t_values]
         opt_curve = [fr.reconstruct_from_sin(t, opt_coeffs) + t for t in t_values]
@@ -202,7 +202,7 @@ def main():
     print(f"Optimized cost = {optimized_cost:.4f}")
 
     # Find the exact solution and plot curves
-    c.plot_curves(initial_guess, a_coeffs_opt)
+    c.plot_curves(initial_guess, a_coeffs_opt, n_points=N_PLOT_POINTS)
 
 
 if __name__ == "__main__":

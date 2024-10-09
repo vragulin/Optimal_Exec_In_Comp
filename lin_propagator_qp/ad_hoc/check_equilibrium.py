@@ -26,9 +26,10 @@ N_PLOT_POINTS = 100  # number of points for plotting
 
 class CheckEquilibrium(CostFunction):
 
-    def plot_curves(self, init_guess: np.ndarray, opt_coeffs: np.ndarray, **kwargs) -> None:
+    def plot_curves(self, init_guess: np.ndarray, opt_coeffs: np.ndarray,
+                    n_points: int, **kwargs) -> None:
         """ Plot curves and and calc stats """
-        t_values = np.linspace(0, 1, N_PLOT_POINTS)
+        t_values = np.linspace(0, 1, n_points)
 
         init_curve = [fr.reconstruct_from_sin(t, init_guess) + t for t in t_values]
         opt_curve = [fr.reconstruct_from_sin(t, opt_coeffs) + t for t in t_values]
@@ -38,7 +39,7 @@ class CheckEquilibrium(CostFunction):
             b_curve = [fr.reconstruct_from_sin(t, self.b_coeffs) + t for t in t_values]
 
         # Plot initial guess and optimized functions
-        fig, axs = plt.subplots(2, 1, figsize=(10, 5))
+        fig, axs = plt.subplots(2, 1, figsize=(7, 10))
         if 'trader' in kwargs:
             trader_str = f"Trader={kwargs['trader']}, "
         else:
@@ -123,7 +124,7 @@ def main():
     print("Norm Diff: ", np.linalg.norm(a_coeffs_opt - initial_guess) / np.sqrt(len(a_coeffs_opt)))
 
     # Find the exact solution and plot curves
-    c.plot_curves(initial_guess, a_coeffs_opt, trader="A")
+    c.plot_curves(initial_guess, a_coeffs_opt, N_PLOT_POINTS, trader="A")
 
     # ----------------------------------------------
     # Check that the solution if optimal for B
@@ -152,7 +153,7 @@ def main():
     print("Norm Diff: ", np.linalg.norm(b_coeffs_opt - initial_guess) / np.sqrt(len(b_coeffs_opt)))
 
     # Find the exact solution and plot curves
-    c.plot_curves(initial_guess, b_coeffs_opt, trader="B")
+    c.plot_curves(initial_guess, b_coeffs_opt, N_PLOT_POINTS, trader="B")
 
     print('Done')
 

@@ -12,6 +12,7 @@ sys.path.append(os.path.abspath(os.path.join(CURRENT_DIR, '..')))
 from propagator import cost_fn_prop_a_matrix
 from est_quad_coeffs import find_coefficients
 import prop_cost_to_QP as pcq
+from opt_cost_prop_qp import CostFunction, SCIPY, QP
 from analytic_solution import solve_equilibrium, foc_terms_a, foc_terms_b
 import fourier as fr
 
@@ -19,32 +20,65 @@ import fourier as fr
 # Script to run and test the analytic_solution.py functions
 # -------------------------------------------------------
 # Global parameters
-N = 1000  # Dimension of the vector x
-lambd = 1
-rho = 1
+N = 200  # Dimension of the vector x
+lambd = 20
+rho = 2
 abs_tol = 1e-6
 
 # Presentation settings
 N_COEFF_TO_PRINT = 4
-N_PLOT_POINTS = 140
+N_PLOT_POINTS = 100  # Works beest when N is a multiple of 2 * N_PLOT_POINTS
+DROP_LAST_SINES = None  # None or integer.  Use to reduce the 'wiggle'
 
 
-def plot_curves(a_coeffs, b_coeffs, lambd, rho, N, **kwargs) -> None:
+def plot_curves(a_coeffs, b_coeffs, lambd, rho, N, n_points, **kwargs) -> None:
     """ Plot curves and and calc stats """
-    t_values = np.linspace(0, 1, N_PLOT_POINTS)
 
-    a_curve = [fr.reconstruct_from_sin(t, a_coeffs) + t for t in t_values]
-    b_curve = [fr.reconstruct_from_sin(t, b_coeffs) + t for t in t_values]
+    if DROP_LAST_SINES:
+        a_coeffs_used = a_coeffs[:-DROP_LAST_SINES]
+        b_coeffs_used = b_coeffs[:-DROP_LAST_SINES]
+    else:
+        a_coeffs_used, b_coeffs_used = a_coeffs, b_coeffs
+
+    t_values = np.linspace(0, 1, n_points)
+    a_curve = [fr.reconstruct_from_sin(t, a_coeffs_used) + t for t in t_values]
+    b_curve = [fr.reconstruct_from_sin(t, b_coeffs_used) + t for t in t_values]
 
     # Plot initial guess and optimized functions
-    plt.title(f'Optimal Trading Strategies, Linear Propagator (OW) Model\n'
-              f'λ={lambd}, ρ={rho}, N={N}', fontsize=12)
+    title_str = (f'Optimal Trading Strategies, Linear Propagator (OW) Model\n'
+                 f'λ={lambd}, ρ={rho}, N={N}')
+    if DROP_LAST_SINES:
+        title_str += f", dropped Last {DROP_LAST_SINES} Sines"
+
+    plt.title(title_str, fontsize=10)
 
     # Top chart
     plt.plot(t_values, a_curve, label=r"$a(t)$", color='red')
-    plt.scatter(t_values, b_curve, label=r"$b_\lambda(t)$", s=20, color='blue', alpha=0.5)
+    # plt.scatter(t_values, b_curve, label=r"$b_\lambda(t)$", s=20, color='green', alpha=0.5)
+    plt.plot(t_values, b_curve, label=r"$b_\lambda(t)$", color='blue', alpha=0.5)
     plt.xlabel('Time')
     plt.ylabel('Position over time')
+    plt.legend()
+    plt.grid()
+
+    plt.tight_layout(rect=(0., 0.01, 1., 0.97))
+    plt.show()
+
+
+def plot_spectral_density(a_coeff, b_coeff, lambd, rho, N):
+    """ Plot the spectral density of the Fourier coefficients """
+    n = np.arange(1, N + 1)
+    a_spec = np.abs(a_coeff)
+    b_spec = np.abs(b_coeff)
+
+    plt.figure(figsize=(10, 5))
+    plt.title(f'Spectral Density of Fourier Coefficients, λ={lambd}, ρ={rho}, N={N}', fontsize=12)
+
+    plt.plot(n, a_spec, label=r"$|a_n|$", color='red', alpha=0.5)
+    plt.plot(n, b_spec, label=r"$|b_n|$", color='blue', alpha=0.5)
+    plt.xlabel('n')
+    plt.ylabel('Spectral Density')
+    # plt.yscale('log')
     plt.legend()
     plt.grid()
 
@@ -64,13 +98,19 @@ if __name__ == "__main__":
     print(f"Number of Fourier Coeffs = {N}, printing the first {N_COEFF_TO_PRINT}")
     print("Trader A: ", a_coeff[:N_COEFF_TO_PRINT])
     print("Trader B: ", b_coeff[:N_COEFF_TO_PRINT])
-    plot_curves(a_coeff, b_coeff, lambd, rho, N)
+    # a_coeff = np.zeros(N)
+    # a_coeff[0] = 1
+    # b_coeff = a_coeff / 2
+    plot_curves(a_coeff, b_coeff, lambd, rho, N, n_points=N_PLOT_POINTS)
+
+    # Plot spectral densities of a and b
+    plot_spectral_density(a_coeff, b_coeff, lambd, rho, N)
 
     # Check that each strategy is the best response to the other
-    print("\nChecking that the strategy of each trader is the best response to the other")
     sys.path.append(os.path.abspath(os.path.join(CURRENT_DIR, '../ad_hoc')))
-    from check_equilibrium import CheckEquilibrium, SCIPY, QP
+    from check_equilibrium import CheckEquilibrium
 
+    print("\nChecking that the strategy of each trader is the best response to the other")
     init_cost, opt_cost, coeffs_opt, coeff_diff = {}, {}, {}, {}
     for trader in ['A', 'B']:
 
@@ -98,7 +138,7 @@ if __name__ == "__main__":
         print(f"Norm Diff {trader}: ", coeff_diff[trader])
 
         # Find the exact solution and plot curves
-        c.plot_curves(initial_guess, coeffs_opt[trader], trader=trader)
+        c.plot_curves(initial_guess, coeffs_opt[trader], n_points=N_PLOT_POINTS, trader=trader)
 
     if max(coeff_diff.values()) > abs_tol \
             or abs(opt_cost["A"] - init_cost["A"]) > abs_tol \
