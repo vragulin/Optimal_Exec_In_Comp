@@ -56,8 +56,10 @@ def cost_QP_params(b_n: np.ndarray, lambd: float, rho: float
     D = np.diag((pi * n / (rho ** 2 + (n * pi) ** 2)).reshape(-1))
     h = D @ (i - exp(-rho) * i_mp)
 
-    # Calluate the quadratic coefficients
+    # Calluate the quadratic coefficients (Hessian)
     H = -rho ** 2 * (D @ i @ h.T + h @ i.T @ D) + pi * rho * N @ D + pi * (N @ M.T @ D + D @ M @ N)
+
+    # Calculate the linear coefficients (gradient)
     f = D @ (exp(-rho) * i - i_mp) - (1 + lambd + rho ** 2 * lambd * i.T @ D @ b_n).item() * h \
         + pi * lambd * (0.5 * rho * N @ D + N @ M.T @ D) @ b_n.reshape([-1, 1])
 
