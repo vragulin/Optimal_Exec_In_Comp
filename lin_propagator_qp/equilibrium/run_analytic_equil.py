@@ -1,5 +1,4 @@
 import time
-
 import numpy as np
 import os
 import sys
@@ -21,14 +20,28 @@ import fourier as fr
 # -------------------------------------------------------
 # Global parameters
 N = 200  # Dimension of the vector x
-lambd = 1
-rho = 0.01
+lambd = 100
+rho = 1
 abs_tol = 1e-6
 
 # Presentation settings
 N_COEFF_TO_PRINT = 4
 N_PLOT_POINTS = 100  # Works beest when N is a multiple of 2 * N_PLOT_POINTS
 DROP_LAST_SINES = 5  # None or integer.  Use to reduce the 'wiggle'
+RUN_TESTS = False  # Run tests and plot test results
+
+def ow_size(t, rho):
+    """" The optimal size according to the Obizhaeva-Wang (2013) model
+    """
+    block = 1 / (2 + rho)
+    continous_speed = rho / (2 + rho)
+    match t:
+        case 0:
+            return 0
+        case 1:
+            return 1
+        case _:
+            return block + continous_speed * t
 
 
 def plot_curves(a_coeffs, b_coeffs, lambd, rho, N, n_points, **kwargs) -> None:
@@ -40,9 +53,10 @@ def plot_curves(a_coeffs, b_coeffs, lambd, rho, N, n_points, **kwargs) -> None:
     else:
         a_coeffs_used, b_coeffs_used = a_coeffs, b_coeffs
 
-    t_values = np.linspace(0, 1, n_points)
+    t_values = np.linspace(0, 1, n_points + 1)
     a_curve = [fr.reconstruct_from_sin(t, a_coeffs_used) + t for t in t_values]
     b_curve = [fr.reconstruct_from_sin(t, b_coeffs_used) + t for t in t_values]
+    ow_curve = [ow_size(t, rho) for t in t_values]
 
     # Plot initial guess and optimized functions
     title_str = (f'Optimal Trading Strategies, Linear Propagator (OW) Model\n'
@@ -56,6 +70,7 @@ def plot_curves(a_coeffs, b_coeffs, lambd, rho, N, n_points, **kwargs) -> None:
     plt.plot(t_values, a_curve, label=r"$a(t)$", color='red')
     # plt.scatter(t_values, b_curve, label=r"$b_\lambda(t)$", s=20, color='green', alpha=0.5)
     plt.plot(t_values, b_curve, label=r"$b_\lambda(t)$", color='blue', alpha=0.5)
+    plt.plot(t_values, ow_curve, label=r"OW(t)", color='green', linestyle='dotted')
     plt.xlabel('Time')
     plt.ylabel('Position over time')
     plt.legend()
@@ -105,46 +120,47 @@ if __name__ == "__main__":
     # b_coeff = a_coeff / 2
     plot_curves(a_coeff, b_coeff, lambd, rho, N, n_points=N_PLOT_POINTS)
 
-    # Plot spectral densities of a and b
-    plot_spectral_density(a_coeff, b_coeff, lambd, rho, N)
+    if RUN_TESTS:
+        # Plot spectral densities of a and b
+        plot_spectral_density(a_coeff, b_coeff, lambd, rho, N)
 
-    # Check that each strategy is the best response to the other
-    sys.path.append(os.path.abspath(os.path.join(CURRENT_DIR, '../ad_hoc')))
-    from check_equilibrium import CheckEquilibrium
+        # Check that each strategy is the best response to the other
+        sys.path.append(os.path.abspath(os.path.join(CURRENT_DIR, '../ad_hoc')))
+        from check_equilibrium import CheckEquilibrium
 
-    print("\nChecking that the strategy of each trader is the best response to the other")
-    init_cost, opt_cost, coeffs_opt, coeff_diff = {}, {}, {}, {}
-    for trader in ['A', 'B']:
+        print("\nChecking that the strategy of each trader is the best response to the other")
+        init_cost, opt_cost, coeffs_opt, coeff_diff = {}, {}, {}, {}
+        for trader in ['A', 'B']:
 
-        if trader == 'A':
-            c = CheckEquilibrium(rho=rho, lambd=lambd, N=N, b_coeffs=b_coeff)
-            initial_guess = a_coeff
+            if trader == 'A':
+                c = CheckEquilibrium(rho=rho, lambd=lambd, N=N, b_coeffs=b_coeff)
+                initial_guess = a_coeff
+            else:
+                c = CheckEquilibrium(rho=rho, lambd=1 / lambd, N=N, b_coeffs=a_coeff, use_trader_b_fn=True)
+                initial_guess = b_coeff
+
+            init_cost[trader] = c.compute(initial_guess)
+            print(f"Initial {trader} coeffs = {np.round(initial_guess[:N_COEFF_TO_PRINT], 3)}")
+            print(f"Initial {trader} guess cost = {init_cost[trader]:.4f}\n")
+
+            # Minimize the cost function
+            coeffs_opt[trader], res = c.solve_min_cost(initial_guess, solver=QP, abs_tol=1e-6)
+
+            # Compute the cost with optimized coefficients
+            opt_cost[trader] = c.compute(coeffs_opt[trader])
+
+            print(f"Optimized {trader} coeffs = {np.round(coeffs_opt[trader][:N_COEFF_TO_PRINT], 3)}")
+            print(f"Optimized cost = {opt_cost[trader]:.4f}")
+
+            coeff_diff[trader] = np.linalg.norm(coeffs_opt[trader] - initial_guess) / np.sqrt(N)
+            print(f"Norm Diff {trader}: ", coeff_diff[trader])
+
+            # Find the exact solution and plot curves
+            c.plot_curves(initial_guess, coeffs_opt[trader], n_points=N_PLOT_POINTS, trader=trader)
+
+        if max(coeff_diff.values()) > abs_tol \
+                or abs(opt_cost["A"] - init_cost["A"]) > abs_tol \
+                or abs(opt_cost["B"] - init_cost["B"]) > abs_tol:
+            print("\nTest failed!  Analytical solution is not optimal")
         else:
-            c = CheckEquilibrium(rho=rho, lambd=1 / lambd, N=N, b_coeffs=a_coeff, use_trader_b_fn=True)
-            initial_guess = b_coeff
-
-        init_cost[trader] = c.compute(initial_guess)
-        print(f"Initial {trader} coeffs = {np.round(initial_guess[:N_COEFF_TO_PRINT], 3)}")
-        print(f"Initial {trader} guess cost = {init_cost[trader]:.4f}\n")
-
-        # Minimize the cost function
-        coeffs_opt[trader], res = c.solve_min_cost(initial_guess, solver=QP, abs_tol=1e-6)
-
-        # Compute the cost with optimized coefficients
-        opt_cost[trader] = c.compute(coeffs_opt[trader])
-
-        print(f"Optimized {trader} coeffs = {np.round(coeffs_opt[trader][:N_COEFF_TO_PRINT], 3)}")
-        print(f"Optimized cost = {opt_cost[trader]:.4f}")
-
-        coeff_diff[trader] = np.linalg.norm(coeffs_opt[trader] - initial_guess) / np.sqrt(N)
-        print(f"Norm Diff {trader}: ", coeff_diff[trader])
-
-        # Find the exact solution and plot curves
-        c.plot_curves(initial_guess, coeffs_opt[trader], n_points=N_PLOT_POINTS, trader=trader)
-
-    if max(coeff_diff.values()) > abs_tol \
-            or abs(opt_cost["A"] - init_cost["A"]) > abs_tol \
-            or abs(opt_cost["B"] - init_cost["B"]) > abs_tol:
-        print("\nTest failed!  Analytical solution is not optimal")
-    else:
-        print("\nSuccess! Analytical solution is optimal for both traders")
+            print("\nSuccess! Analytical solution is optimal for both traders")
