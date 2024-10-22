@@ -21,8 +21,8 @@ import trading_funcs as tf
 import qp_prop_solvers as qp
 
 # Global Parameters
-N = 200  # number of Fourier terms
-RHO = 10  # propagator decay
+N = 100  # number of Fourier terms
+RHO = 100  # propagator decay
 LAMBD = 5  # size of trader B
 SIGMA = 3  # volatility of the stock -- not sure if it works with the approximate cost function
 
@@ -167,16 +167,16 @@ def main():
     # c = CostFunction(rho=RHO, lambd=LAMBD, N=N, b_func=lambda t: t)
     # -------------------------------------------------------------------------
     # Example 2: Trader B following a risk-averse strategy
-    # c = CostFunction(rho=RHO, lambd=LAMBD, N=N,
-    #                  b_func=tf.risk_averse, b_func_params={'sigma': SIGMA})
+    c = CostFunction(rho=RHO, lambd=LAMBD, N=N,
+                     b_func=tf.risk_averse, b_func_params={'sigma': SIGMA})
     # -------------------------------------------------------------------------
     # Example 3: Trader B following an eager strategy
     # c = CostFunction(rho=RHO, lambd=LAMBD, N=N,
     #                  b_func=tf.eager, b_func_params={'sigma': SIGMA})
     # -------------------------------------------------------------------------
     # Example 4: Trader B following an equilibrium strategy
-    c = CostFunction(rho=RHO, lambd=LAMBD, N=N,
-                     b_func=tf.equil_2trader, b_func_params={'trader_a': True, 'kappa': 10})
+    # c = CostFunction(rho=RHO, lambd=LAMBD, N=N,
+    #                  b_func=tf.equil_2trader, b_func_params={'trader_a': True, 'kappa': 10})
     # -------------------------------------------------------------------------
     # Example 5: Trader B following a random strat defined by a vector of random Fourier coeffs.
     # b_coeffs = np.random.rand(N) * np.exp(-DECAY * np.arange(N))

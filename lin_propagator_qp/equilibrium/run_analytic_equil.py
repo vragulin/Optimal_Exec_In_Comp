@@ -20,8 +20,8 @@ import fourier as fr
 # -------------------------------------------------------
 # Global parameters
 N = 200  # Dimension of the vector x
-lambd = 100
-rho = 1
+lambd = 1
+rho = 0.1
 abs_tol = 1e-6
 
 # Presentation settings

@@ -152,7 +152,7 @@ if __name__ == '__main__':
     eq = m.solve_nash()
     print("Model Parameters: λ={}, ρ={}".format(lambd, rho))
     print("Equilibrium parameters: a0={:.4f}, a1={:.4f}, b0={:.4f}, b1={:.4f}".format(*eq))
-    n = OW(rho=rho, lambd=lambd, a=eq[:2], b=eq[2:])
+
     print("\nChecking the gradients at the equilibrium:")
     print('Gradient C_a', n.grad_a())
     print('Gradient C_b', n.grad_b())
