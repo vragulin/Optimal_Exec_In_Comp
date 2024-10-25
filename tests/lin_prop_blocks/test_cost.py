@@ -2,9 +2,6 @@
     V. Ragulin, 10/21/2024
 """
 
-"""  Tests for the price functions in the lin_prop_blocks module.
-    V. Ragulin, 10/20/2024
-"""
 import os
 import sys
 import pytest as pt
@@ -49,7 +46,6 @@ def test_no_blocks_trader_a_2terms(a, b, lambd):
 # @pt.mark.skip("Working ok")
 def test_no_blocks_Nterms():
     # Test if we match without blocks for larger N
-    rho = 10
     N = 20
     lambd = 0.1
     rho = 10
@@ -147,7 +143,6 @@ def test_no_sines_a(a, b, t, lambd):
     ((-0.3, -1.1), (0.5, 0.3), (1.0, -2.0), (0.3, -0.3), 1, 0.1),
 ])
 def test_cost_v_integral(a_n, b_n, a_block, b_block, lambd, rho):
-    # Test if we match without blocks
     N = len(a_n)
     strat_a = pb.SinesBlocks(N, blocks=a_block, coeff=np.array(a_n))
     strat_b = pb.SinesBlocks(N, blocks=b_block, coeff=np.array(b_n), lambd=lambd)

@@ -105,7 +105,7 @@ def solve_equilibrium(n: int, lambd: float, rho: float) -> dict:
     """ Find the equilibrium Fourier parameters for A and B analytically
     """
 
-    # Calculate the first order correction terms
+    # Calculate the first order condition terms
     terms_a = foc_terms_a(n, lambd, rho)
     Ha = terms_a['H']
     Ga = terms_a['G']

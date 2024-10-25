@@ -30,6 +30,7 @@ N_PLOT_POINTS = 100  # Works beest when N is a multiple of 2 * N_PLOT_POINTS
 DROP_LAST_SINES = 5  # None or integer.  Use to reduce the 'wiggle'
 RUN_TESTS = False  # Run tests and plot test results
 
+
 def ow_size(t, rho):
     """" The optimal size according to the Obizhaeva-Wang (2013) model
     """

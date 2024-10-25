@@ -26,7 +26,7 @@ class OW:
         self._K = (self.rho + np.exp(-self.rho) - 1) / self.rho ** 2
 
     def __str__(self):
-        s = f"OW Model: rho={self.rho}, \t lambd={self.lambd}"
+        s = f"OW Model: rho={self.rho}, \t lambd={self.lambd}\n"
         s += f"a: {self.a}, \tb: {self.b}"
         s += f"\nCost A: {self.cost_a}, \t Cost B: {self.cost_b}"
         return s
@@ -144,8 +144,8 @@ class OW:
 
 
 if __name__ == '__main__':
-    lambd = 10
-    rho = 10
+    lambd = 20
+    rho = 1
     m = OW(rho=rho, lambd=lambd)
 
     # Check: print derivatives at the equilibrium
@@ -153,7 +153,8 @@ if __name__ == '__main__':
     print("Model Parameters: λ={}, ρ={}".format(lambd, rho))
     print("Equilibrium parameters: a0={:.4f}, a1={:.4f}, b0={:.4f}, b1={:.4f}".format(*eq))
 
-    print("\nChecking the gradients at the equilibrium:")
+    n = OW(rho=rho, lambd=lambd, a=eq[:2], b=eq[2:])
+    print(f"Cost A: {n.cost_a:.4f}, Cost B: {n.cost_b:.4f}")
     print('Gradient C_a', n.grad_a())
     print('Gradient C_b', n.grad_b())
     n.plot(title=f"Equilibrium Trading Strategies, OW Model"
