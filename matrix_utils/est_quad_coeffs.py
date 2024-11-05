@@ -46,6 +46,7 @@ def find_coefficients(func: Callable, n: int) -> tuple[np.ndarray, np.ndarray, f
     for i in range(n):
         e_i = np.zeros(n)
         e_i[i] = 1
+
         evaluations[i, 0] = func(e_i)
         evaluations[i, 1] = func(2 * e_i)
 

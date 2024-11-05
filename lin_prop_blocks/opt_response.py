@@ -17,16 +17,17 @@ from prop_blocks import SinesBlocks, CostModel
 import trading_funcs as tf
 
 # Parameters
-N = 50  # number of Fourier terms
-RHO = 10  # propagator decay
-LAMBD = 5  # size of trader B
+N = 2  # number of Fourier terms
+RHO = 0.1  # propagator decay
+LAMBD = 2  # size of trader B
 SIGMA = 3  # risk aversion or eagerness coefficient
-FUNC = tf.risk_neutral  # tf.risk_averse tf.eager tf.risk_neutral
-FUNC_PARAMS = {}  # {"sigma": SIGMA}
-OTHER_STRAT_CODE = "a Risk-Neutral"  # "a Risk-Neutral" "an Eager" "a Risk-Averse"
+FUNC = tf.risk_averse  # tf.risk_averse tf.eager tf.risk_neutral
+FUNC_PARAMS = {"sigma": SIGMA}  # {"sigma": SIGMA} {}
+OTHER_STRAT_CODE = "a Risk-Averse"  # "a Risk-Neutral" "an Eager", "a Risk-Neutral"
 
 # Constants
 A, B = range(2)
+ONLY_BLOCKS = False  # If True, only optimize the block coefficients
 
 
 def other(trader: int) -> int:
@@ -122,7 +123,7 @@ def main():
 
     # Minimize the cost function
     start = time.time()
-    strat_a_opt, res = c.solve_min_cost()
+    strat_a_opt, res = c.solve_min_cost(only_blocks=ONLY_BLOCKS)
     print(f"optimization time = {(time.time() - start):.4f}s")
 
     # Compute the cost with optimized coefficients

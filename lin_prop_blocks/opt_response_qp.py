@@ -19,13 +19,13 @@ from cost_model_qp import CostModelQP
 import trading_funcs as tf
 
 # Parameters
-N = 200  # number of Fourier terms
-RHO = 1  # propagator decay
+N = 50  # number of Fourier terms
+RHO = 10  # propagator decay
 LAMBD = 5  # size of trader B
 SIGMA = 3  # risk aversion or eagerness coefficient
-FUNC = tf.eager  # tf.risk_averse tf.eager tf.risk_neutral
+FUNC = tf.risk_neutral  # tf.risk_averse tf.eager tf.risk_neutral
 FUNC_PARAMS = {"sigma": SIGMA}  # {} {"sigma": SIGMA}
-OTHER_STRAT_CODE = "an OW-Equilibrium"  # "a Risk-Neutral" "an Eager" "a Risk-Averse"
+OTHER_STRAT_CODE = "a Risk-Neutral" # "a Risk-Neutral" "an Eager" "a Risk-Averse" "an OW-Equilibrium"
 
 REG_PARAMS = {'wiggle': 0, 'wiggle_exp': 4}  # Regularization parameters - dict or None
 
@@ -106,9 +106,9 @@ def main():
     # c = CostFunction(rho=RHO, lambd=LAMBD, N=N, b_func=lambda t: t)
     # -------------------------------------------------------------------------
     # Example 2: Trader B following a risk-averse strategy
-    # strat_b = SinesBlocks.from_func(func=FUNC, N=N, params=FUNC_PARAMS, lambd=LAMBD)
-    # strats = [SinesBlocks(N=strat_b.N), strat_b]
-    # c = CostModelQP(strats, rho=RHO)
+    strat_b = SinesBlocks.from_func(func=FUNC, N=N, params=FUNC_PARAMS, lambd=LAMBD)
+    strats = [SinesBlocks(N=strat_b.N), strat_b]
+    c = CostModelQP(strats, rho=RHO)
     # -------------------------------------------------------------------------
     # Example 3: Trader B following an eager strategy
     # strat_b = SinesBlocks.from_func(func=tf.eager, N=10, params={"sigma": 3}, lambd=5.0)
@@ -119,9 +119,9 @@ def main():
     # -------------------------------------------------------------------------
     # Example 5: Trader B defined explicitly with parameters
     # -------------------------------------------------------------------------
-    strats = [SinesBlocks(N=N), SinesBlocks(N=N, blocks=(0.5505, 0.522), lambd=LAMBD)]
-    c = CostModelQP(strats, rho=RHO, reg_params=REG_PARAMS)
-    print(c)
+    # strats = [SinesBlocks(N=N), SinesBlocks(N=N, blocks=(0.9661, 0.9231), lambd=LAMBD)]
+    # c = CostModelQP(strats, rho=RHO, reg_params=REG_PARAMS)
+    # print(c)
 
     # Initial guess for a_coeffs
     initial_cost = c.cost_trader()

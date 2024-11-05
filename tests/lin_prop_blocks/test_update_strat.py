@@ -1,4 +1,4 @@
-""" Testing the update_strat method of the PropBlocks class
+""" Testing the update_group method of the PropBlocks class
     V. Ragulin - 10/22/2024
 """
 import os

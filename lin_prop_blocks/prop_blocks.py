@@ -15,7 +15,7 @@ SCIPY, QP = range(2)
 
 
 class SinesBlocks:
-    def __init__(self, N: int, blocks: tuple[float, float] = (0.0, 0.0),
+    def __init__(self, N: int, blocks: tuple[float, ...] = (0.0, 0.0),
                  coeff: np.ndarray | None = None, lambd: float = 1.0):
         """ Initialize the SinesBlocks strategy
             Blocks, coeffs are defined for the unit strategy.  To get the total size
@@ -29,7 +29,7 @@ class SinesBlocks:
 
     def __str__(self):
         return (f"SinesBlocks: N={self.N}, blocks:({self.blocks[0]:.4g}, {self.blocks[1]:.4g})\n"
-                f"\tcoeffs={np.array2string(self.coeff, precision=4, separator=', ', suppress_small=True)}, "
+                f"\tcoeff={np.array2string(self.coeff, precision=4, separator=', ', suppress_small=True)}, "
                 f"lambd={self.lambd:.4g}")
 
     def calc(self, t: float) -> float:
@@ -75,7 +75,7 @@ class SinesBlocks:
 class CostModel:
     A, B = range(2)
 
-    def __init__(self, strats: list[SinesBlocks | None], rho: float):
+    def __init__(self, strats: list[SinesBlocks | None], rho: float, **kwargs):
         self._strats = strats
         self.rho = rho
 
@@ -251,22 +251,32 @@ class CostModel:
     def solve_min_cost(self, trader: int = A, **kwargs) -> tuple:
         """  Solve for the strategy that minimizes the cost of a trader
         """
+        only_blocks = kwargs.get('only_blocks', False)
         solver = kwargs.get('solver', SCIPY)
         if solver == SCIPY:
             print("Using SCIPY solver")
-            x = np.zeros(self.N + 2)
+            encode_length = 2 if only_blocks else self.N + 2
+            x = np.zeros(encode_length)
             x[:2] = np.array(self.strats[trader].blocks)
-            x[2:] = self.strats[trader].coeff
+            if not only_blocks:
+                x[2:] = self.strats[trader].coeff
 
             def obj_func(x):
-                blocks = tuple(x[:2])
-                coeff = x[2:]
-                self.update_strat(trader=trader, blocks=blocks, coeff=coeff)
+                if not only_blocks:
+                    blocks = tuple(x[:2])
+                    coeff = x[2:]
+                    self.update_strat(trader=trader, blocks=blocks, coeff=coeff)
+                else:
+                    blocks = tuple(x)
+                    self.update_strat(trader=trader, blocks=blocks)
                 return self.cost_trader(trader)
 
             res = minimize(obj_func, x)
             opt_blocks = tuple(res.x[:2])
-            opt_coeffs = res.x[2:]
+            if not only_blocks:
+                opt_coeffs = res.x[2:]
+            else:
+                opt_coeffs = self.strats[trader].coeff
             opt_strat = SinesBlocks(self.N, blocks=opt_blocks, coeff=opt_coeffs,
                                     lambd=self.strats[trader].lambd)
             return opt_strat, res

@@ -144,7 +144,7 @@ class OW:
 
 
 if __name__ == '__main__':
-    lambd = 20
+    lambd = 10
     rho = 1
     m = OW(rho=rho, lambd=lambd)
 

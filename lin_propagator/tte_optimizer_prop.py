@@ -21,14 +21,14 @@ import propagator as pp
 import qp_solvers as qp
 
 # Parameters and Constants
-LAMBD = 1  # sixe of Trader B
-RHO = 5  # propagator decay
-N = 30  # number of Fourier Terms
+LAMBD = 20  # sixe of Trader B
+RHO = 100  # propagator decay
+N = 20  # number of Fourier Terms
 GAMMA = 0.1  # Fraction of the way to move towards the new solution (float e.g. 1.0)
 KAPPA = 10  # Parameter for the equilibrium strategy benchmark (permanent impact)
 MAX_ITER = 500
 
-TOL_COEFFS = 1e-4
+TOL_COEFFS = 1e-8
 TOL_COSTS = TOL_COEFFS
 MAX_ABS_COST = 1e3
 N_PLOT_POINTS = 20

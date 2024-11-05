@@ -19,19 +19,20 @@ from cost_model_qp import CostModelQP
 import trading_funcs as tf
 
 # Parameters
-N = 20  # number of Fourier terms
+N = 5  # number of Fourier terms
 RHO = 1  # propagator decay
 LAMBD = 20  # size of trader B
 
 # Regularization parameters
-REG_PARAMS = {'wiggle': 0, 'wiggle_exp': 4}  # Regularization parameters - dict or None
+REG_PARAMS = None  # {'wiggle': 0, 'wiggle_exp': 4}  # Regularization parameters - dict or None
 ONLY_BLOCKS = False  # If True, only optimize the block coefficients
 
 # Exponent for the wiggle penalty
-RUN_TESTS = True  # Check that the solution satisfies the Nash Equilibrium conditions
-abs_tol = 1e-6
+RUN_TESTS = False  # Check that the solution satisfies the Nash Equilibrium conditions
+abs_tol = 1e-8
 
 #
+
 # Presentation parameters
 N_PLOT_POINTS = 100  # number of points to plot, works best with N//2
 N_COEFF_TO_PRINT = 4  # Number of coefficients to print
@@ -123,10 +124,12 @@ def plot_curves(c: CostModelQP, **kwargs) -> None:
 
 def main():
     # Solve for the equilibrium
+    start_time = time.time()
     if ONLY_BLOCKS:
         strats, res = CostModelQP.solve_equilibrium_blocks(N=N, lambd=LAMBD, rho=RHO, reg_params=REG_PARAMS)
     else:
         strats, res = CostModelQP.solve_equilibrium(N=N, lambd=LAMBD, rho=RHO, reg_params=REG_PARAMS)
+    print(f"Time to solve: {time.time() - start_time:.2f} seconds")
 
     # Compute the cost with optimized coefficients
     c = CostModelQP(strats, rho=RHO, reg_params=REG_PARAMS)
