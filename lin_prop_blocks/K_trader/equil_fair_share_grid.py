@@ -20,7 +20,7 @@ from cost_model_K import CostModelK, Group
 import trading_funcs as tf
 
 # Parameters
-N = 5  # number of Fourier terms
+N = 100  # number of Fourier terms
 RHO_LIST = [0.1, 1, 5]  # propagator decay
 NGROUPS = 2  # number of groups
 TOTAL_TRADERS_LIST = [2, 20]  # total number of trader
@@ -115,7 +115,7 @@ def plot_grids(data: dict):
             ax.set_ylabel('Deviation (%)')
             d_fair_share = data[(n, rho)]
             # ax.bar(MKT_SHARE_LIST, d_fair_share, color=['red' if d > 0 else 'blue' for d in d_fair_share])
-            _ = sns.barplot(x=MKT_SHARE_LIST, y=d_fair_share, hue=d_fair_share,
+            _ = sns.barplot(x=MKT_SHARE_LIST, y=[x * 100 for x in d_fair_share], hue=d_fair_share,
                             palette=used_palette, ax=ax, legend=False)
     plt.tight_layout(rect=(0., 0.01, 1., 0.97))
     plt.show()

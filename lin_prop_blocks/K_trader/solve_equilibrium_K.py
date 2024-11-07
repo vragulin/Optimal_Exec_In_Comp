@@ -21,18 +21,18 @@ from cost_model_K import CostModelK, Group
 import trading_funcs as tf
 
 # Parameters
-N = 50  # number of Fourier terms
-RHO = 0.1  # propagator decay
+N = 1  # number of Fourier terms
+RHO = 0.0001  # propagator decay
 NGROUPS = 2  # number of groups
-LAMBD = [90, 1]  # sizes
-NTRADERS = [1, 10]  # number of traders in each group
+LAMBD = [0.25, 0.75]  # sizes
+NTRADERS = [1, 1]  # number of traders in each group
 
 # Regularization parameters
 REG_PARAMS = {'wiggle': 0, 'wiggle_exp': 4}  # Regularization parameters - dict or None
-STRAT_TYPE = {'blocks': True, 'sines': True}  # Types of strategies to use
+STRAT_TYPE = {'blocks': False, 'sines': True}  # Types of strategies to use
 
 # Exponent for the wiggle penalty
-RUN_TESTS = True  # Check that the solution satisfies the Nash Equilibrium conditions
+RUN_TESTS = False  # Check that the solution satisfies the Nash Equilibrium conditions
 abs_tol = 1e-6
 
 # Presentation parameters
@@ -170,7 +170,7 @@ def main():
                 if use_blocks:
                     x[:2] = model.groups[group].strat.blocks
                 if use_sines:
-                    x[2:] = model.groups[group].strat.coeff
+                    x[2*use_blocks:] = model.groups[group].strat.coeff
                 return x
 
             init_guess = extract_coeffs(c, i, STRAT_TYPE)

@@ -19,16 +19,16 @@ import fourier as fr
 # Script to run and test the analytic_solution.py functions
 # -------------------------------------------------------
 # Global parameters
-N = 200  # Dimension of the vector x
-lambd = 1
-rho = 0.1
+N = 5  # Dimension of the vector x
+lambd = 5
+rho = 0.0001
 abs_tol = 1e-6
 
 # Presentation settings
-N_COEFF_TO_PRINT = 4
-N_PLOT_POINTS = 100  # Works beest when N is a multiple of 2 * N_PLOT_POINTS
-DROP_LAST_SINES = 5  # None or integer.  Use to reduce the 'wiggle'
-RUN_TESTS = False  # Run tests and plot test results
+N_COEFF_TO_PRINT = 8
+N_PLOT_POINTS = 1000  # Works beest when N is a multiple of 2 * N_PLOT_POINTS
+DROP_LAST_SINES = None  # None or integer.  Use to reduce the 'wiggle'
+RUN_TESTS = True  # Run tests and plot test results
 
 
 def ow_size(t, rho):
