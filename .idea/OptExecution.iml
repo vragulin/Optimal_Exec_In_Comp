@@ -9,6 +9,7 @@
       <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/matrix_utils" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/optimizer_qp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/haar" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/docs_from_neil" />
       <excludeFolder url="file://$MODULE_DIR$/plan" />
       <excludeFolder url="file://$MODULE_DIR$/venv" />
