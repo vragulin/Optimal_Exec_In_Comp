@@ -17,7 +17,7 @@ def test_reconstruct_const(c, level):
     def func(t):
         return c
 
-    c0, coeffs = hf.haar_coeff(func, (0, 1), level)
+    c0, coeffs = hf.haar_coeff(func, level)
     recon = hf.reconstruct_from_haar((c0, coeffs), 0.33)
 
     if DEBUG:
@@ -32,7 +32,7 @@ def test_reconstruct_linear(c, level):
     def func(t):
         return c * t
     t = 0.33
-    c0, coeffs = hf.haar_coeff(func, (0, 1), level)
+    c0, coeffs = hf.haar_coeff(func, level)
     recon = hf.reconstruct_from_haar((c0, coeffs), t)
     exp = c * t
 
@@ -63,7 +63,7 @@ def test_reconstruct_square(level, c):
     def func(t):
         return c * t**2
     t = 0.33
-    c0, coeffs = hf.haar_coeff(func, (0, 1), level)
+    c0, coeffs = hf.haar_coeff(func, level)
     recon = hf.reconstruct_from_haar((c0, coeffs), t)
     exp = func(t)
 
@@ -95,7 +95,7 @@ def test_reconstruct_sin(level, c):
         return np.sin(np.pi * c * t)
 
     t = 0.33
-    c0, coeffs = hf.haar_coeff(func, (0, 1), level)
+    c0, coeffs = hf.haar_coeff(func, level)
     recon = hf.reconstruct_from_haar((c0, coeffs), t)
     exp = func(t)
 

@@ -15,7 +15,7 @@ def test_haar_coeff_zero(level):
     def func(t):
         return 0
 
-    c0, coeffs = hf.haar_coeff(func, (0, 1), level)
+    c0, coeffs = hf.haar_coeff(func,  level)
 
     if DEBUG:
         print("c0:", c0)
@@ -32,7 +32,7 @@ def test_haar_coeff_const(level, c):
     def func(t):
         return c
 
-    c0, coeffs = hf.haar_coeff(func, (0, 1), level)
+    c0, coeffs = hf.haar_coeff(func, level)
 
     if DEBUG:
         print("c0:", c0)
@@ -49,7 +49,7 @@ def test_haar_coeff_x(level, c):
     def func(t):
         return c * t
 
-    c0, coeffs = hf.haar_coeff(func, (0, 1), level)
+    c0, coeffs = hf.haar_coeff(func, level)
 
     if DEBUG:
         print("c0:", c0)
@@ -78,7 +78,7 @@ def test_haar_coeff_x_sq(level, k0, k2):
     def int_func(t):
         return k0 * t + k2 / 3 * t ** 3
 
-    c0, coeffs = hf.haar_coeff(func, (0, 1), level)
+    c0, coeffs = hf.haar_coeff(func, level)
 
     if DEBUG:
         print("c0:", c0)
@@ -102,14 +102,14 @@ def test_haar_coeff_exp(level, k0, k2):
     """ Test for quadratic function of the type y=c0+c2*t^2 """
 
     sigma = 3
-    
+
     def func(t):
         return np.exp(-sigma * t)
 
     def int_func(t):
         return -1 / sigma * np.exp(-sigma * t)
 
-    c0, coeffs = hf.haar_coeff(func, (0, 1), level)
+    c0, coeffs = hf.haar_coeff(func, level)
 
     if DEBUG:
         print("c0:", c0)
