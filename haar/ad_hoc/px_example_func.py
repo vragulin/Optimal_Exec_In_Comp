@@ -17,7 +17,7 @@ import haar_funcs as hf
 # Global Parameters
 FUNC = 'ow-approx'
 RHO = 20.0
-LEVEL = 5
+LEVEL = 6
 
 
 # Trading intensity functions examples, integrate to 1 over [0,1]
@@ -88,7 +88,8 @@ if __name__ == "__main__":
     m_prime = [func(t) for t in t_values]
     ax.plot(t_values[:-1], m_prime[:-1], label="m'(t), exact", color='blue')
     ax.plot(t_values[:-1], m_prime_approx[:-1], label="m'(t), approx", color='red', marker='o')
-    ax.set_title("Market Trading Intensity Function")
+    ax.set_title("Market"
+                 " Trading Intensity Function")
     ax.set_xlabel("t")
     ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f'{x:.2f}'))
     ax.set_ylabel("m'(t)")
