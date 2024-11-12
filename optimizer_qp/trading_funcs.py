@@ -75,7 +75,7 @@ def equil_2trader(t: float, **kwargs) -> float:
     term3 = (lambd - 1) * exp(kappa * t / 3)
     term4 = (lambd - 1) * exp(2 * kappa * t / 3)
     term5 = (lambd - 1) * exp(kappa * t)
-    term6 = 2 * (exp(kappa)-1)
+    term6 = 2 * (exp(kappa) - 1)
 
     if trader_a:
         return - term1 * (-term2 + term3 + term4 + term5) / term6
@@ -89,15 +89,11 @@ def equil_2trader_deriv(t, **kwargs):
     exp = np.exp
 
     term1 = exp(-kappa * t / 3) * kappa
-    term2 = 3 * exp(4 * t * kappa / 3) * (lambd-1)
-    term3 = (exp(kappa / 3) + exp(2*kappa / 3) + exp(kappa)) * (1+lambd)
+    term2 = 3 * exp(4 * t * kappa / 3) * (lambd - 1)
+    term3 = (exp(kappa / 3) + exp(2 * kappa / 3) + exp(kappa)) * (1 + lambd)
     term4 = 6 * (-1 + exp(kappa))
 
     if trader_a:
         return term1 * (-term2 + term3) / term4
     else:
         return term1 * (term2 + term3) / (term4 * lambd)
-
-
-
-

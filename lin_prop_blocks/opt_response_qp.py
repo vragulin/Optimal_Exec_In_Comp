@@ -20,12 +20,12 @@ import trading_funcs as tf
 
 # Parameters
 N = 50  # number of Fourier terms
-RHO = 10  # propagator decay
-LAMBD = 5  # size of trader B
+RHO = 1  # propagator decay
+LAMBD = 2  # size of trader B
 SIGMA = 3  # risk aversion or eagerness coefficient
-FUNC = tf.risk_neutral  # tf.risk_averse tf.eager tf.risk_neutral
+FUNC = tf.risk_averse  # tf.risk_averse tf.eager tf.risk_neutral
 FUNC_PARAMS = {"sigma": SIGMA}  # {} {"sigma": SIGMA}
-OTHER_STRAT_CODE = "a Risk-Neutral" # "a Risk-Neutral" "an Eager" "a Risk-Averse" "an OW-Equilibrium"
+OTHER_STRAT_CODE = "a Risk-Averse" # "a Risk-Neutral" "an Eager" "a Risk-Averse" "an OW-Equilibrium"
 
 REG_PARAMS = {'wiggle': 0, 'wiggle_exp': 4}  # Regularization parameters - dict or None
 

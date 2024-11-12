@@ -12,13 +12,13 @@ from codetiming import Timer
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.abspath(os.path.join(current_dir, '..')))
-import haar_funcs as hf
+import haar_funcs_fast as hf
 from trading_intensity_funcs import linear, eager, quadratic, bucket, ow_approx, sin_approx
 
 # Global Parameters
-FUNC = 'sin_1_term'
+FUNC = 'ow_approx'
 RHO = 2.0
-LEVEL = 6
+LEVEL = 7
 
 # Example usage
 if __name__ == "__main__":
@@ -48,7 +48,8 @@ if __name__ == "__main__":
         return func_dict[FUNC](t, **func_kwargs)
 
 
-    haar_coeff = hf.haar_coeff(func, level=5)
+    haar_coeff = hf.haar_coeff(func, level=LEVEL)
+    lmum = hf.calc_lmum(level=LEVEL)
 
     # Plots
     fig, axs = plt.subplots(3, 1, figsize=(12, 12))
@@ -61,7 +62,7 @@ if __name__ == "__main__":
 
     # Plot the trading intensity function
     ax = axs[0]
-    m_prime_approx = [hf.reconstruct_from_haar(haar_coeff, t) for t in t_values]
+    m_prime_approx = [hf.reconstruct_from_haar(t, haar_coeff, lmum) for t in t_values]
     m_prime = [func(t) for t in t_values]
     ax.plot(t_values[:-1], m_prime[:-1], label="m'(t), exact", color='blue')
     ax.plot(t_values[:-1], m_prime_approx[:-1], label="m'(t), approx", color='red', marker='o')
@@ -75,7 +76,7 @@ if __name__ == "__main__":
     # Plot position trajectory
     ax = axs[1]
     with Timer(text="Position Trajectory Calculation (Haar): {:.3f} seconds"):
-        pos_approx = [hf.integrate_haar(haar_coeff, 0, t) for t in t_values]
+        pos_approx = [hf.integrate_haar(haar_coeff, 0, t, lmum=lmum) for t in t_values]
     if FUNC in {'ow_approx', 'bucket'}:
         points = [func_kwargs['start'], func_kwargs['end']]
     else:
@@ -94,7 +95,7 @@ if __name__ == "__main__":
     # Plot the price displacement
     ax = axs[2]
     with Timer(text="Price Displacement Calculation (Haar): {:.3f} seconds"):
-        p_approx = [hf.price_haar(t, haar_coeff, RHO) for t in t_values]
+        p_approx = [hf.price_haar(t, haar_coeff, RHO, lmum=lmum) for t in t_values]
     with Timer(text="Price Displacement Calculation (Exact): {:.3f} seconds"):
         p_exact = [quad(lambda s: func(s) * np.exp(-RHO * (t - s)), 0, t)[0] for t in t_values]
     ax.plot(t_values, p_exact, label="P(t), exact", color='blue')

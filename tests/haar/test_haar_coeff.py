@@ -124,3 +124,28 @@ def test_haar_coeff_exp(level, k0, k2):
         mult = 2 ** (j / 2)
         exp_djk = mult * (2 * int_func(mid) - int_func(ub) - int_func(lb))
         assert np.isclose(djk, exp_djk, atol=1e-10)
+
+
+def test_haar_coeff_w_args():
+    def func(t, a, b):
+        return a * np.exp(-b * t)
+
+    a = 2
+    b = 3
+    level = 5
+
+    c0, coeffs = hf.haar_coeff(func, level, func_args=(a, b))
+
+    if DEBUG:
+        print("c0:", c0)
+        print("coeffs:", coeffs)
+    assert len(coeffs) == 2 ** level - 1
+    for j, k, djk in coeffs:
+        step = 1 / 2 ** j
+        lb = step * k
+        mid = step * (k + 0.5)
+        ub = step * (k + 1)
+        mult = 2 ** (j / 2)
+        int_func = lambda t: -a / b * np.exp(-b * t)
+        exp_djk = mult * (2 * int_func(mid) - int_func(ub) - int_func(lb))
+        assert np.isclose(djk, exp_djk, atol=1e-10)

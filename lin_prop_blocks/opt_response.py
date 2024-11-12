@@ -18,7 +18,7 @@ import trading_funcs as tf
 
 # Parameters
 N = 2  # number of Fourier terms
-RHO = 0.1  # propagator decay
+RHO = 10  # propagator decay
 LAMBD = 2  # size of trader B
 SIGMA = 3  # risk aversion or eagerness coefficient
 FUNC = tf.risk_averse  # tf.risk_averse tf.eager tf.risk_neutral
