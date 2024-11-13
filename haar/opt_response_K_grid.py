@@ -22,7 +22,7 @@ from cost_classes import CostHaarK, Group, HaarStrat, SCIPY, ANALYTIC
 import trading_funcs as tf
 
 # Parameters
-LEVEL = 7  # level of the Haar Wavelet System (i.e. N= 2**LEVEL)
+# LEVEL = 7  # level of the Haar Wavelet System (i.e. N= 2**LEVEL)
 RHO = 1  # propagator decay
 NGROUPS = 2  # number of groups
 LAMBD = [1, 2]  # sizes
@@ -70,22 +70,11 @@ def ntraders_list():
     return ', '.join([str(n) for n in NTRADERS])
 
 
-def plot_curves(c: CostHaarK, var_group: int = 0, **kwargs) -> None:
+def plot_curves(axs, c: CostHaarK, var_group: int = 0, **kwargs) -> None:
     n_points = kwargs.get('n_points', 100)
+    opt_cost = kwargs.get('opt_cost', None)
 
     # Plot initial guess and optimized functions
-    fig, axs = plt.subplots(3, 1, figsize=(10, 10))
-    # plt.suptitle(f'Best Response by a Trader in Group {var_group} in the Linear Propagator Model,\n'
-    #              f"The Adversary is Trading {OTHER_STRAT_CODE} Strategy\n"
-    #              f'N={c.N}, λ=[{lambd_list()}], ntraders=[{ntraders_list()}], ρ={c.rho}',
-    #              fontsize=14)
-
-    plt.suptitle(f'Best Response by Trader {var_group} in the Linear Propagator Model,\n'
-                 f"The Adversary is Trading {OTHER_STRAT_CODE} Strategy\n"
-                 f'N={c.N}, λ=[{lambd_list()}], ntraders=[{ntraders_list()}], ρ={c.rho}',
-                 fontsize=14)
-
-    # Top chart
     ax = axs[0]
     t_values = np.linspace(0, 1, n_points + 1)
     init_curve = [t for t in t_values]
@@ -99,7 +88,7 @@ def plot_curves(c: CostHaarK, var_group: int = 0, **kwargs) -> None:
         else:
             ax.plot(t_values, curve, label=trader_func_name(i), color=trader_color(i))
 
-    ax.set_title(f'Position Trajectories for Trader Groups', fontsize=11)
+    ax.set_title(f'Position Trajectories, Opt Cost={opt_cost:.2f}\nlevel={c.level}, N={c.N}', fontsize=11)
     ax.set_xlabel('t')
     ax.set_ylabel(r"$a_i(t)$")
     ax.legend()
@@ -119,7 +108,7 @@ def plot_curves(c: CostHaarK, var_group: int = 0, **kwargs) -> None:
         else:
             ax.plot(t_values[:-1], curve[:-1], label=trader_func_name(i), color=trader_color(i))
 
-    ax.set_title(f'Trading Intensities for Trader Groups', fontsize=11)
+    ax.set_title(f'Trading Intensities, level={c.level}, N={c.N}', fontsize=11)
     ax.set_xlabel('t')
     ax.set_ylabel(r"$a_i'(t)$")
     ax.legend()
@@ -131,47 +120,58 @@ def plot_curves(c: CostHaarK, var_group: int = 0, **kwargs) -> None:
     dp[0] = 0
     dp[-1] = dp[-1]
 
-    ax.set_title(f'Temporary Price Displacement', fontsize=11)
+    ax.set_title(f'Price Displacement, level={c.level}, N={c.N}', fontsize=11)
     ax.plot(t_values, dp, label="dP(0,t)", color='green')
     ax.set_xlabel('Time')
     ax.set_ylabel("dP(0,t)")
     ax.legend()
     ax.grid()
 
-    plt.tight_layout(rect=(0., 0.01, 1., 0.97))
-    plt.show()
-
 
 def main():
-    # Create the model.  For the trader optimizing the response, any parameters can be used
-    def other_trajectory(t: float) -> float:
-        return FUNC(t, **FUNC_ARGS)
+    levels = [3, 4, 5, 6, 7]
+    # levels = [3, 4, 5, 6, 7]
+    fig, axs = plt.subplots(3, 5, figsize=(25, 15))
+    fig.suptitle('Best Response vs. Haar Wavelet Resolution (Level)', fontsize=16)
 
-    strats = [HaarStrat.from_func(func=other_trajectory, level=LEVEL, lambd=LAMBD[i])
-              for i in range(NGROUPS)]
-    groups = [Group(trader_code(i), strats[i], NTRADERS[i]) for i in range(NGROUPS)]
-    c = CostHaarK(groups, RHO)
-    print(c)
+    for idx, level in enumerate(levels):
+        global LEVEL
+        LEVEL = level
 
-    # Calculate the objective function for the initial strategy
-    group_opt = TRADER_TO_OPT
-    initial_cost = c.cost_trader(group_opt)
-    print(f"Initial cost for a trader from group {group_opt}: {initial_cost:.4f}")
+        def other_trajectory(t: float) -> float:
+            return FUNC(t, **FUNC_ARGS)
 
-    # Minimize the cost function
-    start = time.time()
-    strat_opt, res = c.solve_min_cost(group_opt=group_opt, abs_tol=abs_tol, solver=SOLVER)
-    print(f"optimization time = {(time.time() - start):.4f}s")
+        strats = [HaarStrat.from_func(func=other_trajectory, level=LEVEL, lambd=LAMBD[i])
+                  for i in range(NGROUPS)]
+        groups = [Group(trader_code(i), strats[i], NTRADERS[i]) for i in range(NGROUPS)]
+        c = CostHaarK(groups, RHO)
+        print(c)
 
-    # Compute the cost with optimized coefficients
-    optimized_cost = res['fun']
+        # Calculate the objective function for the initial strategy
+        group_opt = TRADER_TO_OPT
+        initial_cost = c.cost_trader(group_opt)
+        print(f"Initial cost for a trader from group {group_opt} at level {level}: {initial_cost:.4f}")
 
-    print(f"Optimized strategy for trader from group {group_opt}:")
-    print(strat_opt)
-    print(f"Optimized cost = {optimized_cost:.4f}")
+        # Minimize the cost function
+        start = time.time()
+        strat_opt, res = c.solve_min_cost(group_opt=group_opt, abs_tol=abs_tol, solver=SOLVER)
+        print(f"optimization time for level {level} = {(time.time() - start):.4f}s")
 
-    # Find the exact solution and plot curves
-    plot_curves(res['var_model'], group=res['var_trader_idx'], n_points=N_PLOT_POINTS)
+        # Compute the cost with optimized coefficients
+        optimized_cost = res['fun']
+
+        print(f"Optimized strategy for trader from group {group_opt} at level {level}:")
+        print(strat_opt)
+        print(f"Optimized cost at level {level} = {optimized_cost:.4f}")
+
+        # Find the exact solution and plot curves
+        row = idx // 5
+        col = idx % 5
+        plot_curves(axs[:, col], res['var_model'], group=res['var_trader_idx'], n_points=N_PLOT_POINTS,
+                    opt_cost = optimized_cost)
+
+    plt.tight_layout(rect=(0., 0.01, 1., 0.97))
+    plt.show()
 
 
 if __name__ == "__main__":

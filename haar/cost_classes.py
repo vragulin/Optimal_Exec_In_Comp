@@ -18,8 +18,9 @@ import haar_funcs_fast as hf
 from est_quad_coeffs import find_coefficients
 
 # Constants
-SCIPY, QP = range(2)
-SOLVER_METHOD = 'SLSQP'  # SLSQP, trust-constr
+SCIPY, ANALYTIC = range(2)
+SOLVER = ANALYTIC
+SCIPY_METHOD = 'SLSQP'  # SLSQP, trust-constr
 # Global
 iteration_count = 0  # Initialize the iteration count
 
@@ -380,8 +381,28 @@ class CostHaarK:
         abs_tol = kwargs.get('abs_tol', 1e-6)
         gstrat = self.groups[group].strat
 
+        # Set up a variation model
+        var_groups = []
+        for i, g in enumerate(self.groups):
+            var_groups.append(Group(name='variation', strat=g.strat, ntraders=1)
+                              if i == group else None)
+        var_model = self.update_subset_of_groups(var_groups)
+        var_trader = var_model.groups_idx[group]['variation']
+
+        def obj_func(x: np.ndarray) -> float:
+            coeff = np.zeros(self.N)
+            coeff[0] = gstrat.coeff[0]
+            coeff[1:] = x
+            var_model.update_group(group=var_trader, coeff=coeff)
+            return var_model.cost_trader(group=var_trader)
+
+        opt_coeffs = gstrat.coeff.copy()  # Initialize with the current strategy, c0 will not change
+
         if solver == SCIPY:
             print("Using SCIPY solver")
+
+            # Extract initial guess
+            x = gstrat.coeff[1:].copy()
 
             # Define the callback function
             def progress_callback(x):
@@ -392,33 +413,28 @@ class CostHaarK:
                     print(f"Iteration {iteration_count}: Parameters = {x},\n"
                           f" Objective Function Value = {obj_value}")
 
-            # Extract initial guess
-            x = gstrat.coeff[1:].copy()
-
-            # Set up a variation model
-            var_groups = []
-            for i, g in enumerate(self.groups):
-                var_groups.append(Group(name='variation', strat=g.strat, ntraders=1)
-                                  if i == group else None)
-            var_model = self.update_subset_of_groups(var_groups)
-            var_trader = var_model.groups_idx[group]['variation']
-
-            def obj_func(x: np.ndarray) -> float:
-                coeff = np.zeros(self.N)
-                coeff[0] = gstrat.coeff[0]
-                coeff[1:] = x
-                var_model.update_group(group=var_trader, coeff=coeff)
-                return var_model.cost_trader(group=var_trader)
-
-            res = minimize(fun=obj_func, x0=x, tol=abs_tol, method=SOLVER_METHOD,
+            res = minimize(fun=obj_func, x0=x, tol=abs_tol, method=SCIPY_METHOD,
                            callback=progress_callback)
-            opt_coeffs = gstrat.coeff.copy()
             opt_coeffs[1:] = res.x
-            opt_strat = HaarStrat(self.level, coeff=opt_coeffs,
-                                  lambd=self.groups[group].strat.lambd, lmum=self.lmum)
+            opt_val = res.fun
         else:
-            raise NotImplementedError("Only SCIPY solver is implemented")
+            # We know that obj_func is quadratic, so let's calculate its coefficients
+            H, f, C = find_coefficients(obj_func, self.N-1)
+            x = np.linalg.solve(H, -f)
+            opt_coeffs[1:] = x
+            opt_val = obj_func(x)
+            res = {'H': H, 'f': f, 'C': C}
+
+        opt_strat = HaarStrat(self.level, coeff=opt_coeffs,
+                              lambd=self.groups[group].strat.lambd, lmum=self.lmum)
 
         var_model.update_group(group=var_trader, coeff=opt_coeffs)
-        res_dict = {'scipy_output': res, 'var_model': var_model, 'var_trader_idx': var_trader}
+        res_dict = {'x': opt_coeffs, 'fun': opt_val,
+                    'solver_output': res,
+                    'var_model': var_model, 'var_trader_idx': var_trader}
+
         return opt_strat, res_dict
+
+
+
+
