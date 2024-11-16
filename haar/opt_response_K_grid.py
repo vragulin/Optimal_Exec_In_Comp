@@ -23,8 +23,9 @@ import trading_funcs as tf
 
 # Parameters
 # LEVEL = 7  # level of the Haar Wavelet System (i.e. N= 2**LEVEL)
-RHO = 1  # propagator decay
-NGROUPS = 2  # number of groups
+RHO = 10  # propagator decay
+NGROUPS = 2
+# number of groups
 LAMBD = [1, 2]  # sizes
 NTRADERS = [1, 1]  # number of traders in each group
 TRADER_TO_OPT = 0  # trader to optimize
@@ -130,9 +131,10 @@ def plot_curves(axs, c: CostHaarK, var_group: int = 0, **kwargs) -> None:
 
 def main():
     levels = [3, 4, 5, 6, 7]
-    # levels = [3, 4, 5, 6, 7]
+    # levels = [3, 3, 4]
     fig, axs = plt.subplots(3, 5, figsize=(25, 15))
-    fig.suptitle('Best Response vs. Haar Wavelet Resolution (Level)', fontsize=16)
+    fig.suptitle('Best Response vs. Haar Wavelet Resolution (Level)\n' +
+                 fr'$\rho$={RHO}, $\lambda$={LAMBD[1]}', fontsize=16)
 
     for idx, level in enumerate(levels):
         global LEVEL
@@ -168,7 +170,7 @@ def main():
         row = idx // 5
         col = idx % 5
         plot_curves(axs[:, col], res['var_model'], group=res['var_trader_idx'], n_points=N_PLOT_POINTS,
-                    opt_cost = optimized_cost)
+                    opt_cost=optimized_cost)
 
     plt.tight_layout(rect=(0., 0.01, 1., 0.97))
     plt.show()
