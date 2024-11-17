@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.abspath(os.path.join(current_dir, '..')))
 
-from g_optimize import price, v_g, imp_cost
+from g_one_trader import price, v_g, cost_trader
 
 # Global parameters
 N = 5
@@ -46,5 +46,5 @@ if __name__ == "__main__":
         cost += cost_i
         print(f'Cost of trade {i}: {cost_i}')
 
-    cost2 = imp_cost(t_n, x_n, g)
+    cost2 = cost_trader(t_n, x_n, g)
     print(f'Total cost (loop): {cost}, cost (func): {cost2}')

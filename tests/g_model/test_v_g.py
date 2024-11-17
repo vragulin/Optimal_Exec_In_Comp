@@ -8,7 +8,7 @@ import sys
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.abspath(os.path.join(current_dir, '../../g_model')))
-from g_optimize import v_g
+from g_one_trader import v_g
 
 DEBUG = True
 

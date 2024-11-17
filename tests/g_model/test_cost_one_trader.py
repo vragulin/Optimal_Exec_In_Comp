@@ -9,7 +9,7 @@ import sys
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.abspath(os.path.join(current_dir, '../../g_model')))
 
-from g_optimize import price, imp_cost, decay_matrix, imp_cost_matrix
+from g_one_trader import price, cost_trader, decay_matrix, cost_trader_matrix
 
 @pt.fixture
 def g_exp():
@@ -37,7 +37,7 @@ def test_imp_cost(g_idx, expected, g_zero, g_exp):
     N = 5
     t = np.linspace(0, 1, N)
     x = np.ones(N) * 1/N
-    actual = imp_cost(t, x, g)
+    actual = cost_trader(t, x, g)
     assert pt.approx(actual, abs=1e-6) == expected
 
 @pt.mark.parametrize("g_idx, expected", [
@@ -56,5 +56,5 @@ def test_imp_cost_mat(g_idx, expected, g_zero, g_exp):
     t = np.linspace(0, 1, N)
     x = np.ones(N) * 1 / N
     g_mat = decay_matrix(t, g)
-    actual = imp_cost_matrix(x, g_mat)
+    actual = cost_trader_matrix(x, g_mat)
     assert pt.approx(actual, abs=1e-6) == expected

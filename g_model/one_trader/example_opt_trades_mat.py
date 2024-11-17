@@ -9,17 +9,41 @@ import matplotlib.pyplot as plt
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.abspath(os.path.join(current_dir, '..')))
 
-import g_optimize as go
+import g_one_trader as go
 
 # Global parameters
 N = 100
-RHO = 10
-N_POINTS_PLOT = 10*N
+RHO = 0.1
+N_POINTS_PLOT = 10 * N
 TOL = 1e-6
+G_FUNC = 'power'  # 'concave', 'exp', 'power'
+
+
 # Define the resilience function g
-def g(t: float) -> float:
+def g(t):
+    match G_FUNC:
+        case 'concave':
+            return g_concave(t)
+        case 'exp':
+            return g_exp(t)
+        case 'power':
+            return g_power(t)
+        case _:
+            raise ValueError(f'Unknown resilience function: {G_FUNC}')
+
+
+def g_concave(t: float) -> float:
     # return np.exp(-RHO*t)
-    return 1/(1+(RHO*t)**2)
+    return 1 / (1 + (RHO * t) ** 2)
+
+
+def g_exp(t: float) -> float:
+    return np.exp(-RHO * t)
+
+
+def g_power(t: float) -> float:
+    return 1 / (1 + RHO * t) ** 0.4
+
 
 def plot_curves(t_n, x_n) -> None:
     # Plot price impact
@@ -29,7 +53,8 @@ def plot_curves(t_n, x_n) -> None:
     )
 
     fig, axs = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
-    plt.suptitle(f'Price impact and trades, N={N}')
+    plt.suptitle(f'Price impact and trades, N={N}\n'
+                 f'Resilience function: {G_FUNC}')
     # Top plot: price impact
     axs[0].plot(t_vals, price_vals, label='Price impact')
     axs[0].set_ylabel('Price impact')
@@ -46,31 +71,32 @@ def plot_curves(t_n, x_n) -> None:
     plt.tight_layout()
     plt.show()
 
+
 if __name__ == "__main__":
     # Define the input arrays
     t_n = np.linspace(0, 1, N)
-    x_n = np.ones(N) * 1/N
+    x_n = np.ones(N) * 1 / N
 
     # plot_curves(t_n, x_n)
 
     # Calc cost of the initial guess
-    cost_twap = go.imp_cost(t_n, x_n, g)
+    cost_twap = go.cost_trader(t_n, x_n, g)
     print(f'TWAP Cost: {cost_twap}')
+
 
     # Optimize the trades
     def is_symmetric(m: np.ndarray) -> bool:
         max_diff = np.max(np.abs(m - m.T))
         return max_diff < 1e-10
 
+
     # This code works fine, but for g(t) = 1/(1+(RHO*t)**2) the condition number of the decay matrix is huge
     # so the matrix inversion is not stable
     g_mat = go.decay_matrix(t_n, g).astype(np.float64)
     assert is_symmetric(g_mat), 'Decay matrix is not symmetric'
     print(f"Condition number of the decay matrix: {np.linalg.cond(g_mat)}")
-    g_mat_inv = np.linalg.inv(g_mat)
-    print(f"Inverse is symmetric: {is_symmetric(g_mat_inv)}")
-    x_n_opt = go.opt_trades_inv(t_n, g_mat_inv)
-    cost_opt = go.imp_cost_matrix(x_n_opt, g_mat)
+    x_n_opt = go.opt_trades_matrix(t_n, g_mat)
+    cost_opt = go.cost_trader_matrix(x_n_opt, g_mat)
 
     print(f'Opt Cost: {cost_opt}')
     plot_curves(t_n, x_n_opt)

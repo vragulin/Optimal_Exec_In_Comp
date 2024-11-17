@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.abspath(os.path.join(current_dir, '..')))
 
-import g_optimize as go
+import g_one_trader as go
 
 # Global parameters
 N = 100
@@ -54,7 +54,7 @@ if __name__ == "__main__":
     # plot_curves(t_n, x_n)
 
     # Calc cost of the initial guess
-    cost_twap = go.imp_cost(t_n, x_n, g)
+    cost_twap = go.cost_trader(t_n, x_n, g)
     print(f'TWAP Cost: {cost_twap}')
 
     # Optimize the trades
@@ -67,8 +67,10 @@ if __name__ == "__main__":
     g_mat = go.decay_matrix(t_n, g).astype(np.float64)
     assert is_symmetric(g_mat), 'Decay matrix is not symmetric'
     print(f"Condition number of the decay matrix: {np.linalg.cond(g_mat)}")
-    x_n_opt = go.opt_trades_matrix(t_n, g_mat)
-    cost_opt = go.imp_cost_matrix(x_n_opt, g_mat)
+    g_mat_inv = np.linalg.inv(g_mat)
+    print(f"Inverse is symmetric: {is_symmetric(g_mat_inv)}")
+    x_n_opt = go.opt_trades_inv(t_n, g_mat_inv)
+    cost_opt = go.cost_trader_matrix(x_n_opt, g_mat)
 
     print(f'Opt Cost: {cost_opt}')
     plot_curves(t_n, x_n_opt)
