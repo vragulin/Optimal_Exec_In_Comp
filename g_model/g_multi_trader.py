@@ -49,10 +49,9 @@ def cost_trader(t_n: np.ndarray, x_n: np.ndarray, m_n: np.ndarray,
     return float(np.sum((prices_before + total_vol / 2) * x_n))
 
 
-def cost_trader_mat(t_n: np.ndarray, x_n: np.ndarray, m_n: np.ndarray,
+def cost_trader_mat(x_n: np.ndarray, m_n: np.ndarray,
                     decay_mat_lt: np.ndarray, trd_in_mkt: bool = True) -> float:
     """ Implementation cost of a trade trajectory, not using the decay matrix
-        :param t_n: trading times in ascending order, all t in [0,1]
         :param x_n: the trader's own trade sizes
         :param m_n: the market trade sizes
         :param decay_mat_lt: NxN matrix of decay coefficients, lower triangular
@@ -98,3 +97,36 @@ def best_response_mat(b_n: np.ndarray, decay_mat_lt: np.ndarray,
     lambd = numer / denom
     a_opt = np.linalg.solve(DpDt, ones * lambd - D @ b_n)
     return a_opt, {'a_opt': a_opt, 'lambda': lambd}
+
+
+def two_trader_equilibrium_mat(sizes: list | tuple | np.ndarray, decay_mat_lt: np.ndarray,
+                               unit_strat: bool = False) -> tuple:
+    """ Calculate the equilibrium of two traders analytically
+    :param sizes: target sizes for both traders
+    :param decay_mat_lt: NxN matrix of decay coefficients, lower triangular
+    :param unit_strat: whether to return the unit stradegies or total trade sizes
+    :return: tuple: optimal trades for both traders
+    """
+
+    D = decay_mat_lt + decay_mat_lt.T
+    n = D.shape[0]
+    sizes_np = sizes if isinstance(sizes, np.ndarray) else np.array(sizes)
+
+    ones_nx1 = np.ones((n, 1))
+    zeros_nxn = np.zeros((n, n))
+    zeros_nx1 = np.zeros((n, 1))
+    zeros_1x2 = np.zeros((1, 2))
+
+    foc_a = np.hstack((D, decay_mat_lt, -ones_nx1, zeros_nx1))   # First order conditions (Nash Eq) for trader A
+    foc_b = np.hstack((decay_mat_lt, D, zeros_nx1, -ones_nx1))  # First order conditions (Nash Eq) for trader B
+    cons_size_a = np.hstack((ones_nx1.T, zeros_nx1.T, zeros_1x2))  # Total size constraint for trader A
+    cons_size_b = np.hstack((zeros_nx1.T, ones_nx1.T, zeros_1x2))  # Total size constraint for trader B
+
+    stacked_matrix = np.vstack((foc_a, foc_b, cons_size_a, cons_size_b))
+
+    b = np.vstack((zeros_nx1, zeros_nx1, sizes_np[:, None]))
+    x = np.linalg.solve(stacked_matrix, b).ravel()
+    if unit_strat:
+        return x[:n] / sizes[0], x[n:2 * n] / sizes[1]
+    else:
+        return x[:n], x[n:2 * n]
