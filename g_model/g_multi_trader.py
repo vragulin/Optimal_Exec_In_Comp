@@ -75,7 +75,7 @@ def best_response(t_n: np.ndarray, b_n: np.ndarray, g: Callable, **kwargs) -> tu
     decay_mat_lt = decay_matrix_lt(t_n, g)
 
     constraint = LinearConstraint(np.ones(n), 1, 1)
-    cost = lambda x: cost_trader_mat(t_n, x, b_n, decay_mat_lt, trd_in_mkt=False)
+    cost = lambda x: cost_trader_mat(x, b_n, decay_mat_lt, trd_in_mkt=False)
 
     tol = kwargs.get('tol', 1e-8)
     res = minimize(cost, init_guess, constraints=[constraint], tol=tol)

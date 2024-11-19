@@ -15,32 +15,51 @@ import g_one_trader as go
 import g_multi_trader as gm
 
 # Global parameters
-N = 100
-RHO = 10
-LAMBD = 10
+N = 50
+RHO = 1
+LAMBD = 200
 TOL = 1e-6
-G_FUNC = 'power'  # 'concave', 'exp', 'exp+perm', 'power'
+G_FUNC = 'exp_mix'  # 'concave', 'exp', 'exp+perm', exp_mix', 'power'
 RUN_TESTS = True
 
 # Presentation parameters
 N_POINTS_PLOT = 10 * N
-N_COEFF_TO_SHOW = min(4,N)
+N_COEFF_TO_SHOW = min(4, N)
 ALPHA = 0.6
 
 
 # Define the resilience function g
-def g(t):
+def g(t, **kwargs):
+    rho = kwargs.get('rho', 1)
     match G_FUNC:
         case 'concave':
-            return 1 / (1 + (RHO * t) ** 2)
+            return 1 / (1 + (rho * t) ** 2)
         case 'exp':
-            return np.exp(-RHO * t)
+            return np.exp(-rho * t)
         case 'exp+perm':
-            return 0.5 * np.exp(-RHO * t) + 0.5
+            return 0.5 * np.exp(-rho * t) + 0.5
         case 'power':
             return 1 / (1 + 10 * t) ** 0.4
         case 'exp_mix':
-            return 0.5 * np.exp(-RHO * t) + 0.5 * np.exp(-25 * RHO * t)
+            return 0.5 * np.exp(-rho * t) + 0.5 * np.exp(-25 * rho * t)
+        case _:
+            raise ValueError(f'Unknown resilience function: {G_FUNC}')
+
+
+def g_str(**kwargs):
+    """String representation of the resilience function"""
+    rho = kwargs.get('rho', 1)
+    match G_FUNC:
+        case 'concave':
+            return f'1 / (1 + ({rho}*t)**2)'
+        case 'exp':
+            return f'exp(-{rho}*t)'
+        case 'exp+perm':
+            return f'0.5 * exp(-{rho}*t) + 0.5'
+        case 'power':
+            return '1 / (1 + 10 * t) ** 0.4'
+        case 'exp_mix':
+            return f'0.5 * exp(-{rho} * t) + 0.5 * exp({-25 * rho} * t)'
         case _:
             raise ValueError(f'Unknown resilience function: {G_FUNC}')
 
@@ -55,8 +74,10 @@ def plot_curves(t_n, a_opt, b_n) -> None:
     t_vals = np.linspace(0, 1, N_POINTS_PLOT)
 
     fig, axs = plt.subplots(3, 1, figsize=(10, 8), sharex=True)
-    plt.suptitle(f'Equlirbirum in a Two-Trader Market\n'
-                 fr'Resilience function: {G_FUNC}, $\lambda$={LAMBD}, N={N}')
+    sup_s = f'Two-Trader Competitive Execution Equilibrium\n'
+    sup_s += fr'$\lambda$={LAMBD}, N={N}, '
+    sup_s += f'g(t)={g_str()}'
+    plt.suptitle(sup_s)
 
     # Position trajector
     ax = axs[0]
@@ -100,7 +121,7 @@ def test_tte():
     D = gm.decay_matrix_lt(t_n, g)
     a_opt, b_opt = gm.two_trader_equilibrium_mat(sizes=[1, LAMBD], decay_mat_lt=D, unit_strat=True)
 
-    # Optimal Cost at Equilibrium
+    # Solve for the equilibrium
     cost_a_opt = gm.cost_trader_mat(a_opt, b_opt * LAMBD, D, trd_in_mkt=False)
     cost_b_opt = gm.cost_trader_mat(b_opt * LAMBD, a_opt, D, trd_in_mkt=False)
     print(f"Cost at equilibrium: c_a = {cost_a_opt:.4f}, c_b = {cost_b_opt:.4f}")
@@ -117,8 +138,8 @@ def test_tte():
             size_trd, size_adv = [1, LAMBD] if i == 0 else [LAMBD, 1]
 
             cost = gm.cost_trader_mat(trd * size_trd, adv * size_adv, D, trd_in_mkt=False)
-            trd_opt, stats = gm.best_response_mat(adv * size_adv/size_trd, D)
-            cost_opt = gm.cost_trader_mat(trd_opt*size_trd, adv * size_adv, D, trd_in_mkt=False)
+            trd_opt, stats = gm.best_response_mat(adv * size_adv / size_trd, D)
+            cost_opt = gm.cost_trader_mat(trd_opt * size_trd, adv * size_adv, D, trd_in_mkt=False)
             print(f"Cost of trader {i}:  c_equil = {cost:.4f}, c_opt = {cost_opt:.4f}")
             print(f"Optimal trades: {trd_opt[:N_COEFF_TO_SHOW]}")
             assert np.isclose(cost, cost_opt, atol=TOL), f"Trader {i} costs do not match"
